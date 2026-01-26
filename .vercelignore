@@ -1,0 +1,52 @@
+# Exclude Python backend entirely
+*.py
+requirements.txt
+requirements_production.txt
+api/
+backend/
+pillars/
+scheduler/
+scripts/
+utils/
+tests/
+01_Data_Sync/
+04_Intelligence_Lab/
+titan_app.py
+startup_app.py
+titan_integrity.py
+settings.py
+Dockerfile
+.dockerignore
+
+# Exclude Python artifacts
+.venv/
+venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Exclude build artifacts
+.git/
+.vercel/
+web/node_modules/
+web/.next/
+node_modules/
+.next/
+out/
+dist/
+build/
+.cache/
+logs/
+*.log
+
+# Exclude credentials and state
+service-key.json
+.env
+config_override.json
+sales_sync_state.json
+schema_analysis.json
