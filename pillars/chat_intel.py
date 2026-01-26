@@ -241,7 +241,8 @@ def get_categorized_table(rows_with_tag, format_as="md"):
         lines.append("|------|--------|------|--------|")
         for r in rs:
             iname = (r.get("item_name") or "").replace("|", "\\|")
-            lines.append(f"| {iname} | {r.get('amount',0):,.2f} | {r.get('expense_date','')} | {(r.get('ledger_name') or '').replace('|','\\|')} |")
+            ledger = (r.get('ledger_name') or '').replace('|', '\\|')
+            lines.append(f"| {iname} | {r.get('amount',0):,.2f} | {r.get('expense_date','')} | {ledger} |")
         lines.append("")
     if other and len(other) <= 20:
         lines.append("**Other**")
@@ -249,7 +250,8 @@ def get_categorized_table(rows_with_tag, format_as="md"):
         lines.append("|------|--------|------|--------|")
         for r in other[:20]:
             iname = (r.get("item_name") or "").replace("|", "\\|")
-            lines.append(f"| {iname} | {r.get('amount',0):,.2f} | {r.get('expense_date','')} | {(r.get('ledger_name') or '').replace('|','\\|')} |")
+            ledger = (r.get('ledger_name') or '').replace('|', '\\|')
+            lines.append(f"| {iname} | {r.get('amount',0):,.2f} | {r.get('expense_date','')} | {ledger} |")
     return "\n".join(lines).strip()
 
 
