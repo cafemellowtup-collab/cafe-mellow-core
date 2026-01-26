@@ -1,0 +1,41 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.env
+.venv
+env/
+venv/
+.eggs/
+*.egg-info/
+*.egg
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Web frontend (deployed separately)
+web/
+.next/
+node_modules/
+
+# Tests
+tests/
+*.test.py
+
+# Documentation
+*.md
+!README.md
+
+# Local files
+*.log
+*.sqlite
+reports/
