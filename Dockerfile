@@ -8,8 +8,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for caching
-COPY requirements_production.txt .
-RUN pip install --no-cache-dir -r requirements_production.txt
+COPY requirements_production-backend.txt .
+RUN pip install --no-cache-dir -r requirements_production-backend.txt
 
 # Copy application code
 COPY . .
