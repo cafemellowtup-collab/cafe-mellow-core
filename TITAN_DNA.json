@@ -1,0 +1,84 @@
+{
+    "project_identity": "TITAN ERP - Cafe Mellow",
+    "last_updated": "2026-01-20 13:28",
+    "current_mission": "Production-ready TITAN Command Center: 5-tab UI (Executive Dashboard, Intelligence Chat, User & Rights, API & Config, Evolution Lab), system error logging (file + BigQuery), DNA-driven docs, and continuous evolution via dev_evolution_log.",
+    "infrastructure": {
+        "editor": "Cursor AI-Native",
+        "database": "Google BigQuery",
+        "framework": "Modular Pillar Architecture"
+    },
+    "sentinel_pillars": [
+        "p1_revenue_integrity.py",
+        "p2_inventory_gap.py",
+        "p3_expense_purity.py"
+    ],
+    "app_pillars": [
+        "chat_intel.py",
+        "config_vault.py",
+        "dashboard.py",
+        "evolution.py",
+        "system_logger.py",
+        "users_roles.py"
+    ],
+    "root_markdown": [
+        {
+            "file": "COMPLETE_IMPLEMENTATION_SUMMARY.md",
+            "status": "active",
+            "last_modified": "2026-01-20 12:54"
+        },
+        {
+            "file": "GETTING_STARTED.md",
+            "status": "active",
+            "last_modified": "2026-01-20 01:25"
+        },
+        {
+            "file": "PROJECT_FLOW_EXPLANATION.md",
+            "status": "active",
+            "last_modified": "2026-01-20 13:27"
+        },
+        {
+            "file": "README_MASTER.md",
+            "status": "active",
+            "last_modified": "2026-01-20 02:49"
+        },
+        {
+            "file": "START_HERE.md",
+            "status": "active",
+            "last_modified": "2026-01-20 12:58"
+        },
+        {
+            "file": "SYSTEM_README.md",
+            "status": "active",
+            "last_modified": "2026-01-20 12:59"
+        },
+        {
+            "file": "TITAN_VISION_ROADMAP.md",
+            "status": "active",
+            "last_modified": "2026-01-20 02:49"
+        }
+    ],
+    "archived_markdown": [
+        "99_Archive_Legacy/Completed_Docs/ADVANCED_FEATURES_COMPLETE.md",
+        "99_Archive_Legacy/Completed_Docs/API_AUTOMATION_INFO.md",
+        "99_Archive_Legacy/Completed_Docs/APP_STATUS.md",
+        "99_Archive_Legacy/Completed_Docs/BLUEPRINT_PROOF.md",
+        "99_Archive_Legacy/Completed_Docs/CLEANUP_PLAN.md",
+        "99_Archive_Legacy/Completed_Docs/COMPLETED_WORK_SUMMARY.md",
+        "99_Archive_Legacy/Completed_Docs/CRITICAL_FIXES_PLAN.md",
+        "99_Archive_Legacy/Completed_Docs/FINAL_APP_SUMMARY.md",
+        "99_Archive_Legacy/Completed_Docs/IMPLEMENTATION_STATUS.md",
+        "99_Archive_Legacy/Completed_Docs/IMPLEMENTATION_STATUS_V2.md",
+        "99_Archive_Legacy/Completed_Docs/PROGRESS_REPORT.md",
+        "99_Archive_Legacy/Completed_Docs/STEP1_COMPLETE.md",
+        "99_Archive_Legacy/Completed_Docs/STEP2_COMPLETE.md",
+        "99_Archive_Legacy/Completed_Docs/SYSTEM_READY.md",
+        "99_Archive_Legacy/PROJECT_BIBLE.md",
+        "99_Archive_Legacy/SYSTEM_MAP.md"
+    ],
+    "rules": [
+        "Expense tagging: Ledger - Category",
+        "Automatic Task Queue injection for anomalies",
+        "Purity filter for personal/business separation",
+        "All runtime errors to logs/titan_system_log.txt and system_error_log (BQ)"
+    ]
+}
