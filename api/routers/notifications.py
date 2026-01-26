@@ -32,9 +32,11 @@ def _get_bq_client():
         project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
         key_path = key_file if os.path.isabs(key_file) else os.path.join(project_root, key_file)
         
-        if not os.path.exists(key_path):
-            return None
-        return bigquery.Client.from_service_account_json(key_path)
+        if os.path.exists(key_path):
+            return bigquery.Client.from_service_account_json(key_path)
+        
+        project_id = getattr(cfg, "PROJECT_ID", None) or os.environ.get("PROJECT_ID")
+        return bigquery.Client(project=project_id) if project_id else bigquery.Client()
     except Exception:
         return None
 

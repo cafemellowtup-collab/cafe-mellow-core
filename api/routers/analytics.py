@@ -24,9 +24,18 @@ async def get_data_quality(
     try:
         from google.cloud import bigquery
         from pillars.config_vault import EffectiveSettings
+        import os
         
         cfg = EffectiveSettings()
-        client = bigquery.Client.from_service_account_json(cfg.KEY_FILE)
+        key_file = getattr(cfg, "KEY_FILE", "service-key.json")
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+        key_path = key_file if os.path.isabs(key_file) else os.path.join(project_root, key_file)
+        
+        if os.path.exists(key_path):
+            client = bigquery.Client.from_service_account_json(key_path)
+        else:
+            project_id = getattr(cfg, "PROJECT_ID", None) or os.environ.get("PROJECT_ID")
+            client = bigquery.Client(project=project_id) if project_id else bigquery.Client()
         
         engine = DataQualityEngine(client, cfg)
         score = engine.calculate_score(org_id, location_id, days)
@@ -64,9 +73,18 @@ async def calculate_profit(
         from google.cloud import bigquery
         from pillars.config_vault import EffectiveSettings
         from backend.core.chameleon import AdaptiveStrategy
+        import os
         
         cfg = EffectiveSettings()
-        client = bigquery.Client.from_service_account_json(cfg.KEY_FILE)
+        key_file = getattr(cfg, "KEY_FILE", "service-key.json")
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+        key_path = key_file if os.path.isabs(key_file) else os.path.join(project_root, key_file)
+        
+        if os.path.exists(key_path):
+            client = bigquery.Client.from_service_account_json(key_path)
+        else:
+            project_id = getattr(cfg, "PROJECT_ID", None) or os.environ.get("PROJECT_ID")
+            client = bigquery.Client(project=project_id) if project_id else bigquery.Client()
         
         if force_strategy:
             strategy = AdaptiveStrategy(force_strategy)

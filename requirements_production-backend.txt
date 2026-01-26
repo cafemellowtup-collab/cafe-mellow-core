@@ -12,6 +12,7 @@ python-multipart==0.0.12
 # Database & BigQuery
 google-cloud-bigquery==3.25.0
 google-auth==2.35.0
+db-dtypes==1.2.0
 
 # AI & ML
 google-generativeai==0.8.3
