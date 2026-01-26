@@ -1,10 +1,10 @@
-import SettingsEnhanced from "./SettingsEnhanced";
+import SettingsEnhanced from "../../settings/SettingsEnhanced";
 
 async function getConfig() {
   const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
     
     const res = await fetch(`${base}/config`, { 
       cache: "no-store",

@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ReactNode } from "react";
+import { LogOut, User } from "lucide-react";
 import NotificationCenter from "./NotificationCenter";
+import { useAuth } from "@/contexts/AuthContext";
 
 function NavItem({ href, label, badge }: { href: string; label: string; badge?: string }) {
   const pathname = usePathname();
@@ -38,6 +40,14 @@ function NavItem({ href, label, badge }: { href: string; label: string; badge?: 
 }
 
 export default function AppShell({ children }: { children: ReactNode }) {
+  const router = useRouter();
+  const { user, logout, isAuthenticated } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-950 to-black/90 text-zinc-50">
       <div className="pointer-events-none fixed inset-0 opacity-60" aria-hidden>
@@ -84,15 +94,32 @@ export default function AppShell({ children }: { children: ReactNode }) {
               </div>
               <div className="flex items-center gap-3">
                 <NotificationCenter />
-                <div className="hidden rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-200 shadow-md shadow-emerald-500/10 md:inline-flex">
-                  Admin
-                </div>
-                <Link 
-                  href="/chat"
-                  className="rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 px-4 py-2 text-xs font-semibold text-black shadow-lg shadow-emerald-500/30 transition hover:scale-[1.01]"
-                >
-                  Launch Command Center
-                </Link>
+                {isAuthenticated && user ? (
+                  <div className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-200 shadow-md shadow-emerald-500/10 md:inline-flex">
+                    <User size={12} />
+                    <span>{user.name || user.email}</span>
+                  </div>
+                ) : (
+                  <div className="hidden rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-200 shadow-md shadow-emerald-500/10 md:inline-flex">
+                    Guest
+                  </div>
+                )}
+                {isAuthenticated ? (
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-zinc-300 transition hover:bg-red-500/20 hover:text-red-200 hover:border-red-500/30"
+                  >
+                    <LogOut size={14} />
+                    <span className="hidden md:inline">Logout</span>
+                  </button>
+                ) : (
+                  <Link 
+                    href="/login"
+                    className="rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 px-4 py-2 text-xs font-semibold text-black shadow-lg shadow-emerald-500/30 transition hover:scale-[1.01]"
+                  >
+                    Sign In
+                  </Link>
+                )}
               </div>
             </div>
           </header>

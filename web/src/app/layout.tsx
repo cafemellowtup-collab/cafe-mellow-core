@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import AppShell from "@/components/AppShell";
-import { TenantProvider } from "@/contexts/TenantContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "TITAN ERP",
-  description: "Cafe AI Business OS",
+  description: "AI-Powered Restaurant Intelligence Platform",
 };
 
 export default function RootLayout({
@@ -27,11 +25,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-950`}
       >
-        <TenantProvider>
-          <AppShell>{children}</AppShell>
-        </TenantProvider>
+        {children}
       </body>
     </html>
   );

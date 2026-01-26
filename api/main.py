@@ -13,7 +13,7 @@ from utils.ops_brief import generate_and_store as _generate_and_store_brief
 from utils.ops_brief import get_latest_brief as _get_latest_brief
 from utils.ai_task_queue import generate_and_write_ops_tasks as _generate_and_write_ops_tasks
 
-from api.routers import cron, ledger, analytics, hr, ceo_brief, upload, chat, sync, oracle, forecast, ingester, users, notifications
+from api.routers import cron, ledger, analytics, hr, ceo_brief, upload, chat, sync, oracle, forecast, ingester, users, notifications, auth
 
 
 app = FastAPI(
@@ -98,6 +98,7 @@ app.include_router(forecast.router)
 app.include_router(ingester.router)
 app.include_router(users.router)
 app.include_router(notifications.router)
+app.include_router(auth.router)
 
 app.add_middleware(
     CORSMiddleware,
