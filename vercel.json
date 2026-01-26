@@ -1,7 +1,8 @@
 {
-  "buildCommand": "cd web && npm install && npm run build",
+  "buildCommand": "cd web && npm run build",
   "outputDirectory": "web/.next",
-  "installCommand": "cd web && npm install",
-  "framework": null,
-  "ignoreCommand": "echo 'Skipping build check'"
+  "installCommand": "cd web && npm ci --prefer-offline",
+  "devCommand": "cd web && npm run dev",
+  "framework": "nextjs",
+  "functions": {}
 }
