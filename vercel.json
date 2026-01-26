@@ -3,6 +3,5 @@
   "outputDirectory": "web/.next",
   "installCommand": "cd web && npm ci --prefer-offline",
   "devCommand": "cd web && npm run dev",
-  "framework": "nextjs",
-  "functions": {}
+  "framework": "nextjs"
 }
