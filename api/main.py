@@ -19,9 +19,33 @@ from backend.universal_adapter.airlock import router as airlock_router
 
 app = FastAPI(
     title="TITAN ERP API", 
-    version="3.0.0-PRODUCTION",
-    description="Ever Built - Proactive AI ERP with Relational Intelligence"
+    version="4.0.0-SEMANTIC-BRAIN",
+    description="Universal Semantic Brain - AGI for Data Engineering | Multi-Tenant SaaS"
 )
+
+
+@app.get("/")
+async def root():
+    """Root endpoint with system info"""
+    return {
+        "name": "TITAN ERP",
+        "version": "4.0.0",
+        "edition": "Universal Semantic Brain",
+        "status": "operational",
+        "capabilities": [
+            "semantic-classification",
+            "multi-tenant-isolation",
+            "immutable-event-ledger",
+            "ai-cfo-chat",
+            "360-analysis"
+        ]
+    }
+
+
+@app.get("/health")
+async def global_health():
+    """Global health check"""
+    return {"ok": True, "status": "healthy", "version": "4.0.0"}
 
 # Auto-Pilot: Background cron scheduler
 @app.on_event("startup")

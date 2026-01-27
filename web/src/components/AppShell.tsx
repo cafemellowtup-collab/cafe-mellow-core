@@ -76,11 +76,11 @@ export default function AppShell({ children }: { children: ReactNode }) {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-xs uppercase tracking-[0.18em] text-emerald-200/70">Status</div>
-                  <div className="mt-1 font-semibold">API: http://127.0.0.1:8000</div>
+                  <div className="mt-1 font-semibold">v4.0 Semantic Brain</div>
                 </div>
                 <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_0_6px_rgba(52,211,153,0.15)]" />
               </div>
-              <div className="mt-2 text-xs text-emerald-100/80">Next: ship to Cloud Run & Vercel</div>
+              <div className="mt-2 text-xs text-emerald-100/80">Production: Cloud Run + Vercel</div>
             </div>
           </div>
         </aside>
