@@ -160,8 +160,8 @@ def ensure_event_log_table() -> bool:
         bigquery.SchemaField("event_timestamp", "TIMESTAMP", mode="REQUIRED"),
         bigquery.SchemaField("source_timestamp", "TIMESTAMP"),
         bigquery.SchemaField("version", "INTEGER", mode="REQUIRED"),
-        bigquery.SchemaField("data_before", "JSON"),
-        bigquery.SchemaField("data_after", "JSON", mode="REQUIRED"),
+        bigquery.SchemaField("data_before", "STRING"),
+        bigquery.SchemaField("data_after", "STRING", mode="REQUIRED"),
         bigquery.SchemaField("data_fingerprint", "STRING", mode="REQUIRED"),
         bigquery.SchemaField("source_system", "STRING", mode="REQUIRED"),
         bigquery.SchemaField("raw_log_id", "STRING"),
@@ -314,8 +314,8 @@ def log_event(
         "event_timestamp": event.event_timestamp.isoformat(),
         "source_timestamp": event.source_timestamp.isoformat() if event.source_timestamp else None,
         "version": event.version,
-        "data_before": event.data_before,  # Pass dict directly for JSON type
-        "data_after": event.data_after,    # Pass dict directly for JSON type
+        "data_before": json.dumps(event.data_before) if event.data_before else None,
+        "data_after": json.dumps(event.data_after),
         "data_fingerprint": event.data_fingerprint,
         "source_system": event.source_system,
         "raw_log_id": event.raw_log_id,
@@ -326,12 +326,41 @@ def log_event(
     }
     
     try:
-        print(f"[DEBUG] Attempting to insert event to {table_id}")
-        print(f"[DEBUG] Row data: event_id={row['event_id']}, entity={row['entity_type']}:{row['entity_id']}")
-        errors = client.insert_rows_json(table_id, [row])
-        if errors:
-            print(f"[ERROR] Inserting event: {errors}")
-            return None
+        # Use SQL INSERT instead of streaming API for immediate availability
+        changed_fields_str = ', '.join([f"'{f}'" for f in (event.changed_fields or [])])
+        
+        def safe_str(val):
+            if val is None:
+                return "NULL"
+            escaped = str(val).replace("'", "''").replace("\\", "\\\\")
+            return f"'{escaped}'"
+        
+        insert_sql = f"""
+        INSERT INTO `{table_id}` (
+            event_id, entity_type, entity_id, event_type, event_timestamp,
+            source_timestamp, version, data_before, data_after, data_fingerprint,
+            source_system, raw_log_id, changed_fields, change_reason, actor_type, actor_id
+        ) VALUES (
+            {safe_str(row['event_id'])},
+            {safe_str(row['entity_type'])},
+            {safe_str(row['entity_id'])},
+            {safe_str(row['event_type'])},
+            TIMESTAMP({safe_str(row['event_timestamp'])}),
+            {'TIMESTAMP(' + safe_str(row['source_timestamp']) + ')' if row['source_timestamp'] else 'NULL'},
+            {row['version']},
+            {safe_str(row['data_before']) if row['data_before'] else 'NULL'},
+            {safe_str(row['data_after'])},
+            {safe_str(row['data_fingerprint'])},
+            {safe_str(row['source_system'])},
+            {safe_str(row['raw_log_id']) if row['raw_log_id'] else 'NULL'},
+            [{changed_fields_str}],
+            {safe_str(row['change_reason']) if row['change_reason'] else 'NULL'},
+            {safe_str(row['actor_type']) if row['actor_type'] else 'NULL'},
+            {safe_str(row['actor_id']) if row['actor_id'] else 'NULL'}
+        )
+        """
+        
+        client.query(insert_sql).result()
         print(f"[EVENT] {event_type.value} {entity_type.value}:{entity_id} v{version}")
         return event
     except Exception as e:
