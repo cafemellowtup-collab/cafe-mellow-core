@@ -326,6 +326,8 @@ def log_event(
     }
     
     try:
+        print(f"[DEBUG] Attempting to insert event to {table_id}")
+        print(f"[DEBUG] Row data: event_id={row['event_id']}, entity={row['entity_type']}:{row['entity_id']}")
         errors = client.insert_rows_json(table_id, [row])
         if errors:
             print(f"[ERROR] Inserting event: {errors}")
@@ -333,7 +335,9 @@ def log_event(
         print(f"[EVENT] {event_type.value} {entity_type.value}:{entity_id} v{version}")
         return event
     except Exception as e:
+        import traceback
         print(f"[ERROR] Event logging failed: {e}")
+        print(f"[TRACEBACK] {traceback.format_exc()}")
         return None
 
 
@@ -356,8 +360,10 @@ def process_incoming_data(
     
     Returns: (determined_event_type, event_record)
     """
+    print(f"[DEBUG] process_incoming_data called: {entity_type.value}:{entity_id}")
     # Check if entity exists
     current_version, current_data, _ = get_latest_version(entity_type.value, entity_id)
+    print(f"[DEBUG] Current version: {current_version}")
     
     # Determine event type
     if is_cancellation:
