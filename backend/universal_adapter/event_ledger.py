@@ -314,8 +314,8 @@ def log_event(
         "event_timestamp": event.event_timestamp.isoformat(),
         "source_timestamp": event.source_timestamp.isoformat() if event.source_timestamp else None,
         "version": event.version,
-        "data_before": json.dumps(event.data_before) if event.data_before else None,
-        "data_after": json.dumps(event.data_after),
+        "data_before": event.data_before,  # Pass dict directly for JSON type
+        "data_after": event.data_after,    # Pass dict directly for JSON type
         "data_fingerprint": event.data_fingerprint,
         "source_system": event.source_system,
         "raw_log_id": event.raw_log_id,
