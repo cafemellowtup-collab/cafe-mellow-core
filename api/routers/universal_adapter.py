@@ -257,6 +257,57 @@ async def start_background():
     return result
 
 
+@router.post("/cancel/{entity_type}/{entity_id}")
+async def cancel_entity(entity_type: str, entity_id: str, reason: str = ""):
+    """
+    Cancel/soft-delete an entity. Creates a CANCELLED event in the ledger.
+    The entity is NOT physically deleted - it's marked as cancelled.
+    """
+    from backend.universal_adapter.event_ledger import (
+        EntityType as ET, EventType, log_event, get_latest_version
+    )
+    
+    # Map string to EntityType
+    entity_map = {
+        "order": ET.ORDER, "expense": ET.EXPENSE, "purchase": ET.PURCHASE
+    }
+    if entity_type.lower() not in entity_map:
+        raise HTTPException(status_code=400, detail=f"Unknown entity type: {entity_type}")
+    
+    et = entity_map[entity_type.lower()]
+    
+    # Get current state
+    version, current_data, _ = get_latest_version(entity_type.lower(), entity_id)
+    if version == 0:
+        raise HTTPException(status_code=404, detail=f"Entity {entity_type}:{entity_id} not found")
+    
+    # Add cancellation markers
+    cancelled_data = current_data.copy() if current_data else {}
+    cancelled_data["_status"] = "cancelled"
+    cancelled_data["_cancelled_at"] = datetime.utcnow().isoformat()
+    cancelled_data["_cancel_reason"] = reason
+    
+    # Log cancellation event
+    event = log_event(
+        entity_type=et,
+        entity_id=entity_id,
+        event_type=EventType.CANCELLED,
+        data_after=cancelled_data,
+        data_before=current_data,
+        source_system="api_cancel",
+        change_reason=reason or "User cancelled"
+    )
+    
+    if event:
+        return {
+            "ok": True,
+            "message": f"{entity_type} {entity_id} cancelled",
+            "version": event.version,
+            "event_id": event.event_id
+        }
+    return {"ok": False, "error": "Failed to cancel entity"}
+
+
 @router.post("/process/stop-background")
 async def stop_background():
     """Stop background processing"""
