@@ -68,6 +68,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
               <NavItem href="/chat" label="Chat" badge="Live" />
               <NavItem href="/dashboard" label="Dashboard" />
               <NavItem href="/operations" label="Operations" />
+              <NavItem href="/operations/quarantine" label="Quarantine" />
               <NavItem href="/settings" label="Settings" />
             </nav>
 
