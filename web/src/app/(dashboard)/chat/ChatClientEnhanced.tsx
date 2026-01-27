@@ -6,6 +6,7 @@ import { Send, Plus, Sparkles, Trash2, TrendingUp, TrendingDown, Activity } from
 import { API_BASE_URL } from "@/lib/api";
 import { useTenant } from "@/contexts/TenantContext";
 import SmartMarkdown from "@/components/SmartMarkdown";
+import AIResponseFormatter, { TaskData } from "@/components/AIResponseFormatter";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import "highlight.js/styles/github-dark.css";
 
@@ -309,6 +310,16 @@ export default function ChatClientEnhanced() {
     });
   }
 
+  function handleTaskAssign(task: TaskData) {
+    // Open task assignment modal or create task directly
+    const assignee = prompt(`Assign task to (enter email or name):\n\n"${task.title}"`);
+    if (assignee) {
+      // In production, this would call the tasks API
+      alert(`Task assigned to ${assignee}:\n${task.title}\n\nPriority: ${task.priority}`);
+      // TODO: Call /api/v1/tasks/create with task data
+    }
+  }
+
   function autoTitleFrom(text: string) {
     const cleaned = text.replace(/\s+/g, " ").trim();
     if (!cleaned) return "New Executive Thread";
@@ -527,7 +538,14 @@ export default function ChatClientEnhanced() {
                       {m.role === "user" ? "CEO" : "Titan CFO"}
                       <span className="h-px w-6 bg-emerald-300/30" />
                     </div>
-                    <SmartMarkdown content={m.content || ""} />
+                    {m.role === "assistant" ? (
+                      <AIResponseFormatter 
+                        content={m.content || ""} 
+                        onTaskAssign={(task) => handleTaskAssign(task)}
+                      />
+                    ) : (
+                      <SmartMarkdown content={m.content || ""} />
+                    )}
                     {m.chart && <InChatVisualization chart={m.chart} />}
                   </div>
                 </motion.div>
