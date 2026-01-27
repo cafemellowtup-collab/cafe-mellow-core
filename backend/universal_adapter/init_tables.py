@@ -211,6 +211,29 @@ def init_all_tables():
                 confidence FLOAT64 DEFAULT 1.0,
                 created_by STRING DEFAULT 'ai'
             )
+        """,
+        
+        "event_log": """
+            CREATE TABLE IF NOT EXISTS `{project}.{dataset}.event_log` (
+                event_id STRING NOT NULL,
+                entity_type STRING NOT NULL,
+                entity_id STRING NOT NULL,
+                event_type STRING NOT NULL,
+                event_timestamp TIMESTAMP NOT NULL,
+                source_timestamp TIMESTAMP,
+                version INT64 NOT NULL,
+                data_before JSON,
+                data_after JSON NOT NULL,
+                data_fingerprint STRING NOT NULL,
+                source_system STRING NOT NULL,
+                raw_log_id STRING,
+                changed_fields ARRAY<STRING>,
+                change_reason STRING,
+                actor_type STRING,
+                actor_id STRING
+            )
+            PARTITION BY DATE(event_timestamp)
+            CLUSTER BY entity_type, entity_id
         """
     }
     

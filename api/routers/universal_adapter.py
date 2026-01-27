@@ -368,6 +368,170 @@ async def mapping_stats():
 
 
 # =============================================================================
+# Event Ledger - Immutable Audit Trail
+# =============================================================================
+
+@router.get("/events/history/{entity_type}/{entity_id}")
+async def get_entity_history(entity_type: str, entity_id: str, limit: int = 50):
+    """
+    Get the full history of an entity (all versions/changes).
+    Perfect for auditing "who changed what, when".
+    """
+    from backend.universal_adapter.event_ledger import get_entity_history as get_history
+    
+    history = get_history(entity_type, entity_id, limit=limit)
+    
+    return {
+        "ok": True,
+        "entity_type": entity_type,
+        "entity_id": entity_id,
+        "version_count": len(history),
+        "history": history
+    }
+
+
+@router.get("/events/latest/{entity_type}/{entity_id}")
+async def get_entity_latest(entity_type: str, entity_id: str):
+    """Get the current/latest state of an entity"""
+    from backend.universal_adapter.event_ledger import get_latest_state
+    
+    state = get_latest_state(entity_type, entity_id)
+    
+    if state is None:
+        raise HTTPException(status_code=404, detail=f"Entity {entity_type}:{entity_id} not found")
+    
+    return {
+        "ok": True,
+        "entity_type": entity_type,
+        "entity_id": entity_id,
+        "data": state
+    }
+
+
+@router.get("/events/changes")
+async def get_recent_changes(
+    entity_type: Optional[str] = None,
+    hours: int = 24
+):
+    """Get summary of all changes in the last N hours"""
+    from backend.universal_adapter.event_ledger import get_change_summary
+    from datetime import datetime, timezone, timedelta
+    
+    start_time = datetime.now(timezone.utc) - timedelta(hours=hours)
+    summary = get_change_summary(entity_type=entity_type, start_time=start_time)
+    
+    return {
+        "ok": True,
+        "period_hours": hours,
+        "filter_entity_type": entity_type,
+        "summary": summary
+    }
+
+
+@router.post("/events/init-views")
+async def init_event_views():
+    """Create/update BigQuery views for latest state queries"""
+    from backend.universal_adapter.event_ledger import create_latest_state_views, ensure_event_log_table
+    
+    ensure_event_log_table()
+    success = create_latest_state_views()
+    
+    return {
+        "ok": success,
+        "message": "Event views created" if success else "Failed to create views"
+    }
+
+
+# =============================================================================
+# Reconciliation - Gap Detection & Recovery
+# =============================================================================
+
+@router.get("/reconciliation/unprocessed")
+async def get_unprocessed_logs(hours_back: int = 24, limit: int = 100):
+    """Find raw_logs that weren't processed into event_log (potential gaps)"""
+    from backend.universal_adapter.reconciliation import find_unprocessed_raw_logs
+    
+    gaps = find_unprocessed_raw_logs(hours_back=hours_back, limit=limit)
+    
+    return {
+        "ok": True,
+        "hours_checked": hours_back,
+        "gaps_found": len(gaps),
+        "gaps": gaps
+    }
+
+
+@router.get("/reconciliation/time-gaps")
+async def get_time_gaps(
+    entity_type: str = "order",
+    hours_back: int = 24,
+    min_gap_minutes: int = 120
+):
+    """Find time periods with no events (potential outage periods)"""
+    from backend.universal_adapter.reconciliation import find_time_gaps
+    from datetime import datetime, timezone, timedelta
+    
+    end_time = datetime.now(timezone.utc)
+    start_time = end_time - timedelta(hours=hours_back)
+    
+    gaps = find_time_gaps(
+        entity_type=entity_type,
+        start_time=start_time,
+        end_time=end_time,
+        expected_interval_minutes=min_gap_minutes
+    )
+    
+    return {
+        "ok": True,
+        "entity_type": entity_type,
+        "period_hours": hours_back,
+        "min_gap_minutes": min_gap_minutes,
+        "gaps_found": len(gaps),
+        "gaps": [
+            {"start": g[0].isoformat() if g[0] else None, 
+             "end": g[1].isoformat() if g[1] else None}
+            for g in gaps
+        ]
+    }
+
+
+@router.post("/reconciliation/run")
+async def run_reconciliation(hours_back: int = 24, background_tasks: BackgroundTasks = None):
+    """Run the reconciliation check (finds missing data, doesn't auto-recover)"""
+    from backend.universal_adapter.reconciliation import run_daily_reconciliation
+    
+    result = run_daily_reconciliation(hours_back=hours_back)
+    
+    return {
+        "ok": True,
+        "result": result.to_dict()
+    }
+
+
+@router.get("/reconciliation/consistency/{entity_type}/{entity_id}")
+async def check_consistency(entity_type: str, entity_id: str):
+    """Check if event_log state matches main table for an entity"""
+    from backend.universal_adapter.reconciliation import check_data_consistency
+    
+    result = check_data_consistency(entity_type, entity_id)
+    
+    return {
+        "ok": result.get("status") == "consistent",
+        "entity_type": entity_type,
+        "entity_id": entity_id,
+        "result": result
+    }
+
+
+@router.get("/reconciliation/hourly-check")
+async def hourly_health_check():
+    """Quick hourly check for critical issues (stuck records, etc.)"""
+    from backend.universal_adapter.reconciliation import hourly_check
+    
+    return hourly_check()
+
+
+# =============================================================================
 # Include Airlock Router
 # =============================================================================
 

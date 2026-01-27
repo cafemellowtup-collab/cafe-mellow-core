@@ -131,8 +131,13 @@ def process_single_record(log_id: str) -> Dict[str, Any]:
         
         # Handle result
         if result_status == TransformResult.SUCCESS and validated:
-            # Write to main DB
-            success, write_error = write_to_main_db(validated, target_schema)
+            # Write to main DB (with event ledger tracking)
+            success, write_error = write_to_main_db(
+                validated, 
+                target_schema,
+                raw_log_id=log_id,
+                source_system=source_type
+            )
             
             if success:
                 _mark_completed(client, raw_logs_table, log_id)
@@ -205,7 +210,11 @@ def _process_batch_records(
             result_status, validated, errors = transform_data(record, target_schema, source_identifier)
             
             if result_status == TransformResult.SUCCESS and validated:
-                success, write_error = write_to_main_db(validated, target_schema)
+                success, write_error = write_to_main_db(
+                    validated, target_schema,
+                    raw_log_id=f"{parent_log_id}_row{i}",
+                    source_system=source_type
+                )
                 if success:
                     results["success"] += 1
                 else:

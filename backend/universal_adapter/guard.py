@@ -24,6 +24,10 @@ from .golden_schema import (
     validate_order, validate_expense, validate_purchase
 )
 from .refinery import TransformResult
+from .event_ledger import (
+    EntityType, EventType, log_event, process_incoming_data,
+    get_latest_version, ensure_event_log_table
+)
 
 
 # =============================================================================
@@ -360,10 +364,19 @@ def _learn_from_correction(client, cfg, quarantine_id: str, corrected_data: Dict
 # Write to Main Database
 # =============================================================================
 
-def write_to_main_db(validated_data, target_schema: str) -> Tuple[bool, Optional[str]]:
+def write_to_main_db(
+    validated_data, 
+    target_schema: str,
+    raw_log_id: Optional[str] = None,
+    source_system: str = "unknown",
+    is_cancellation: bool = False
+) -> Tuple[bool, Optional[str]]:
     """
     Write validated data to the main production tables.
     This is the final step - only perfect data reaches here.
+    
+    IMPORTANT: This now uses the Event Ledger for immutable audit trail.
+    Every write is first logged as an event, then written to main tables.
     """
     client, cfg = _get_bq_client()
     if not client:
@@ -373,6 +386,53 @@ def write_to_main_db(validated_data, target_schema: str) -> Tuple[bool, Optional
         project_id = getattr(cfg, "PROJECT_ID", "")
         dataset_id = getattr(cfg, "DATASET_ID", "")
         
+        # Ensure event_log table exists
+        ensure_event_log_table()
+        
+        # Determine entity type and ID
+        if target_schema == "order":
+            entity_type = EntityType.ORDER
+            entity_id = validated_data.order_id
+            data_dict = validated_data.model_dump() if hasattr(validated_data, 'model_dump') else validated_data.__dict__
+        elif target_schema == "expense":
+            entity_type = EntityType.EXPENSE
+            entity_id = validated_data.expense_id
+            data_dict = validated_data.model_dump() if hasattr(validated_data, 'model_dump') else validated_data.__dict__
+        elif target_schema == "purchase":
+            entity_type = EntityType.PURCHASE
+            entity_id = validated_data.purchase_id
+            data_dict = validated_data.model_dump() if hasattr(validated_data, 'model_dump') else validated_data.__dict__
+        else:
+            return False, f"Unknown schema: {target_schema}"
+        
+        # Convert date objects to strings for JSON serialization
+        for key, value in data_dict.items():
+            if hasattr(value, 'isoformat'):
+                data_dict[key] = value.isoformat()
+            elif isinstance(value, list):
+                # Handle nested objects (like order items)
+                data_dict[key] = [
+                    item.model_dump() if hasattr(item, 'model_dump') else 
+                    (item.__dict__ if hasattr(item, '__dict__') else item)
+                    for item in value
+                ]
+        
+        # Log to event ledger (determines if CREATE or UPDATE automatically)
+        event_type_determined, event = process_incoming_data(
+            entity_type=entity_type,
+            entity_id=entity_id,
+            incoming_data=data_dict,
+            source_system=source_system,
+            raw_log_id=raw_log_id,
+            is_cancellation=is_cancellation
+        )
+        
+        # If event was skipped (duplicate), still return success
+        if event is None and not is_cancellation:
+            print(f"[SKIP] Duplicate or no-change for {entity_type.value}:{entity_id}")
+            return True, None
+        
+        # Write to main tables
         if target_schema == "order":
             return _write_order_to_db(client, project_id, dataset_id, validated_data)
         elif target_schema == "expense":
