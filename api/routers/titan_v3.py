@@ -25,7 +25,7 @@ from backend.core.titan_v3 import (
     PhoenixProtocols,
 )
 
-router = APIRouter(prefix="/titan/v3", tags=["TITAN v3"])
+router = APIRouter(prefix="/api/v1/titan/v3", tags=["TITAN v3"])
 
 
 # Request/Response Models
