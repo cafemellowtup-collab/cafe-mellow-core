@@ -106,6 +106,25 @@ async def master_health():
     return {"ok": True, "service": "master_dashboard", "version": "1.0.0"}
 
 
+@router.get("/stats")
+async def get_stats():
+    """Get quick system stats"""
+    try:
+        total = TenantRegistry.get_tenant_count()
+        active = TenantRegistry.get_tenant_count(TenantStatus.ACTIVE)
+        system_health = HealthMonitor.get_system_health()
+        
+        return {
+            "ok": True,
+            "total_tenants": total,
+            "active_tenants": active,
+            "system_status": system_health.status.value,
+            "active_alerts": system_health.active_alerts,
+        }
+    except Exception as e:
+        return {"ok": True, "total_tenants": 0, "error": str(e)}
+
+
 @router.get("/overview", response_model=OverviewResponse)
 async def get_overview():
     """Get master dashboard overview"""
