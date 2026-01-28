@@ -18,6 +18,12 @@ db-dtypes==1.2.0
 google-generativeai==0.8.3
 Pillow==10.4.0
 
+# TITAN v3 Dependencies
+aiohttp>=3.9.0
+textblob>=0.17.0
+tenacity>=8.2.0
+google-cloud-storage>=2.10.0
+
 # Data Processing
 pandas>=2.2.0,<3.0.0  # Lock to <3.0 for BigQuery/Streamlit compatibility
 numpy>=1.26.0  # Python 3.13 compatible
