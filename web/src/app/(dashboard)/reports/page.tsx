@@ -235,7 +235,7 @@ export default function ReportsPage() {
             </AreaChart>
           ) : type === "pie" ? (
             <RechartsPie>
-              <Pie data={data} dataKey={yKey} nameKey={xKey} cx="50%" cy="50%" outerRadius={70} label={(entry) => entry[xKey]}>
+              <Pie data={data} dataKey={yKey} nameKey={xKey} cx="50%" cy="50%" outerRadius={70} label={({ name }) => name}>
                 {data.map((_: any, index: number) => (
                   <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                 ))}
@@ -463,7 +463,7 @@ export default function ReportsPage() {
                   }`}>
                     {typeof value === "number"
                       ? key.includes("margin") ? `${value}%` : formatCurrency(value)
-                      : value
+                      : String(value ?? "")
                     }
                   </div>
                 </div>

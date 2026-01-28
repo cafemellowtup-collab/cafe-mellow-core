@@ -343,7 +343,7 @@ function DataChart({ chart }: { chart: ChartData }) {
               cx="50%"
               cy="50%"
               outerRadius={80}
-              label={(entry) => entry[chart.xKey]}
+              label={({ name }) => name}
             >
               {chart.data.map((_, index) => (
                 <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
