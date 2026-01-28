@@ -17,6 +17,12 @@ from utils.bq_guardrails import query_to_df
 router = APIRouter(prefix="/api/v1/oracle", tags=["oracle"])
 
 
+@router.get("/health")
+async def health_check():
+    """Health check for Oracle service"""
+    return {"ok": True, "service": "oracle", "status": "healthy", "capabilities": ["vision", "simulation", "deductive_reasoning", "fraud_detection"]}
+
+
 class VisionAnalysisRequest(BaseModel):
     image_base64: str
     analysis_type: str  # "invoice", "food_quality", "inventory_shelf", "general"

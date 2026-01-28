@@ -11,6 +11,12 @@ from backend.core.chameleon import DataQualityEngine, StrategySelector
 router = APIRouter(prefix="/api/v1/analytics", tags=["analytics"])
 
 
+@router.get("/health")
+async def health_check():
+    """Health check for Analytics service"""
+    return {"ok": True, "service": "analytics", "status": "healthy"}
+
+
 @router.get("/data_quality")
 async def get_data_quality(
     org_id: str = Query(...),

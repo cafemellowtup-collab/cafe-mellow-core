@@ -17,6 +17,12 @@ from utils.bq_guardrails import query_to_df
 router = APIRouter(prefix="/api/v1/forecast", tags=["forecast"])
 
 
+@router.get("/health")
+async def health_check():
+    """Health check for Forecast service"""
+    return {"ok": True, "service": "forecast", "status": "healthy"}
+
+
 class ForecastRequest(BaseModel):
     org_id: str
     location_id: str

@@ -7,9 +7,16 @@ Run with: python -m pytest tests/test_all_endpoints.py -v
 Or: python tests/test_all_endpoints.py (standalone)
 """
 
+import sys
+import os
+
+# Fix Windows encoding issues
+if sys.platform == 'win32':
+    sys.stdout.reconfigure(encoding='utf-8')
+    os.environ['PYTHONIOENCODING'] = 'utf-8'
+
 import requests
 import json
-import sys
 from datetime import datetime
 from typing import Dict, Any, List, Tuple
 
@@ -90,11 +97,11 @@ class TitanTestSuite:
     def test_main_health(self):
         """Test main API health endpoint"""
         success, data, status, duration = self._make_request("GET", "/health")
-        passed = success and data.get("status") == "ok"
+        passed = success and data.get("ok") == True
         self.add_result(
             "Main Health Check",
             passed,
-            f"Status: {status}, Response: {json.dumps(data)[:100]}",
+            f"Status: {status}, Version: {data.get('version', 'N/A')}",
             duration
         )
     

@@ -15,6 +15,13 @@ from pillars.config_vault import EffectiveSettings
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
+
+@router.get("/health")
+async def health_check():
+    """Health check for Auth service"""
+    return {"ok": True, "service": "auth", "status": "healthy"}
+
+
 # JWT secret - in production, use environment variable
 JWT_SECRET = os.environ.get("JWT_SECRET", secrets.token_hex(32))
 JWT_EXPIRY_HOURS = 24 * 7  # 7 days
