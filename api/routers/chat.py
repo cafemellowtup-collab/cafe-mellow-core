@@ -14,6 +14,7 @@ from utils.gemini_chat import chat_with_gemini_stream, get_conversation_history
 from utils.bq_guardrails import QueryMetaCollector
 from pillars.chat_intel import parse_time_window
 from utils.auto_task_extractor import extract_tasks_from_response, insert_tasks_to_bigquery
+from backend.core.data_intelligence import get_smart_data_context
 
 router = APIRouter(prefix="/api/v1/chat", tags=["chat"])
 
@@ -108,20 +109,24 @@ def chat_stream(req: ChatRequest):
             # Accumulate full response for auto-task extraction
             full_ai_response = ""
             
-            # Relational Intelligence: Detect SQL intent
-            sql_context = None
+            # TITAN Data Intelligence: Fetch ACTUAL data based on user intent
+            data_context = None
             if req.enable_sql:
-                sql_context = _detect_sql_intent(msg, client, cfg, req.org_id, req.location_id)
+                try:
+                    data_context = get_smart_data_context(client, cfg, msg)
+                except Exception as e:
+                    print(f"Data Intelligence error: {e}")
+                    data_context = None
             
             # Vision context if image provided
             vision_context = None
             if req.enable_vision and req.image_base64:
                 vision_context = f"[Image analysis enabled. Base64 length: {len(req.image_base64)}]"
             
-            # Build enhanced context for AI
+            # Build enhanced context for AI with ACTUAL DATA
             enhanced_msg = msg
-            if sql_context:
-                enhanced_msg = f"{msg}\n\n[SQL Context Available: {sql_context}]"
+            if data_context:
+                enhanced_msg = f"{msg}\n\n{data_context}"
             if vision_context:
                 enhanced_msg = f"{enhanced_msg}\n\n{vision_context}"
             
@@ -197,8 +202,21 @@ def chat_non_streaming(req: ChatRequest) -> Dict[str, Any]:
     try:
         from utils.gemini_chat import chat_with_gemini
         
+        # Fetch ACTUAL data based on user intent
+        data_context = None
+        if req.enable_sql:
+            try:
+                data_context = get_smart_data_context(client, cfg, msg)
+            except Exception:
+                pass
+        
+        # Build enhanced message with actual data
+        enhanced_msg = msg
+        if data_context:
+            enhanced_msg = f"{msg}\n\n{data_context}"
+        
         conversation_history = get_conversation_history(client, cfg, limit=10)
-        response = chat_with_gemini(client, cfg, msg, conversation_history=conversation_history)
+        response = chat_with_gemini(client, cfg, enhanced_msg, conversation_history=conversation_history)
         
         return {"ok": True, "answer": response}
     except HTTPException:
