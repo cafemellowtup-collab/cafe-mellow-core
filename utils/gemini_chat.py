@@ -1,5 +1,6 @@
 """
 Gemini Chat Integration with BigQuery Memory
+Enhanced with TITAN v3 Intelligence System
 """
 import sys
 import os
@@ -9,10 +10,23 @@ if sys.platform == 'win32':
 import requests
 import json
 import settings
+import asyncio
 from datetime import datetime
 from google.cloud import bigquery
 from google.cloud.exceptions import NotFound
 from utils.bq_guardrails import query_to_df
+
+# TITAN v3 Integration (optional - graceful degradation if not available)
+try:
+    from backend.core.titan_v3 import (
+        PersonalityEngine, 
+        ActiveSenses,
+        EvolutionCore,
+        GraphRAG
+    )
+    TITAN_V3_AVAILABLE = True
+except ImportError:
+    TITAN_V3_AVAILABLE = False
 
 def get_bigquery_context(client, settings, limit=10):
     """Get recent context from BigQuery for chat memory"""
@@ -192,8 +206,138 @@ def get_conversation_history(client, settings, limit=10):
     except:
         return []
 
-def chat_with_gemini(client, settings, user_message, conversation_history=None, use_enhanced_prompt=False, original_user_prompt=None):
-    """Chat with Gemini API. If use_enhanced_prompt=True, user_message is the full instruction+data; no extra system wrap. original_user_prompt used for saving when use_enhanced_prompt."""
+def get_titan_v3_context(user_message: str, tenant_id: str = "default") -> dict:
+    """
+    Build enhanced context using TITAN v3 components.
+    Returns personality mode, external senses, and learned strategies.
+    """
+    if not TITAN_V3_AVAILABLE:
+        return {"available": False}
+    
+    try:
+        # Initialize v3 components
+        personality = PersonalityEngine()
+        
+        # Analyze user sentiment and query type
+        sentiment = personality.detect_sentiment(user_message)
+        query_type = personality.classify_query_type(user_message)
+        mode = personality.select_mode(sentiment, query_type)
+        tone_instructions = personality.get_tone_instructions(mode)
+        
+        # Get external senses (weather, market) - run async
+        external_context = ""
+        try:
+            senses = ActiveSenses(location="Tiruppur, Tamil Nadu, India")
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            external_context = loop.run_until_complete(senses.build_external_context())
+            loop.close()
+        except Exception:
+            pass
+        
+        # Get learned strategies
+        learning_context = ""
+        try:
+            evolution = EvolutionCore(tenant_id=tenant_id)
+            learning_context = evolution.build_learning_context(user_message)
+        except Exception:
+            pass
+        
+        return {
+            "available": True,
+            "personality_mode": mode.value,
+            "sentiment": sentiment,
+            "query_type": query_type,
+            "tone_instructions": tone_instructions,
+            "external_context": external_context,
+            "learning_context": learning_context,
+        }
+    except Exception as e:
+        return {"available": False, "error": str(e)}
+
+
+def build_titan_v3_prompt(base_context: str, v3_context: dict, user_message: str, conversation_history=None) -> str:
+    """Build enhanced prompt with TITAN v3 intelligence"""
+    
+    # Base TITAN CFO persona with v3 enhancements
+    persona_base = """You are TITAN v3 - Self-Evolving Business Intelligence CFO.
+
+**CORE IDENTITY:**
+You are NOT a consultant. You are the ruthless, data-driven CFO with deep reasoning capabilities.
+"""
+    
+    # Add personality mode instructions
+    personality_section = ""
+    if v3_context.get("available") and v3_context.get("tone_instructions"):
+        personality_section = f"""
+**PERSONALITY MODE: {v3_context.get('personality_mode', 'hybrid').upper()}**
+{v3_context.get('tone_instructions', '')}
+"""
+    
+    # Standard rules
+    rules_section = """
+**RULES:**
+1. NO POLITE FILLER. BANNED: "Let's work together", "I'd suggest", "Great question"
+2. START with THE NUMBER. No preamble.
+3. EVERY ISSUE = [TASK:] <action> by <deadline> | Owner: <who>
+4. Quantify EVERYTHING. "High" = ₹X. "Low" = Y%.
+5. Root causes MUST be data-backed.
+
+**RESPONSE FORMAT:**
+• **Finding:** ₹X impact
+• **Cause:** Data-backed root cause
+• **Action:** [TASK:] Specific action by deadline | Owner: Role
+• **Impact:** Expected outcome if action taken
+"""
+    
+    # Add external context (weather, market)
+    external_section = ""
+    if v3_context.get("available") and v3_context.get("external_context"):
+        external_section = f"""
+{v3_context.get('external_context', '')}
+"""
+    
+    # Add learned strategies
+    learning_section = ""
+    if v3_context.get("available") and v3_context.get("learning_context"):
+        learning_section = f"""
+{v3_context.get('learning_context', '')}
+"""
+    
+    # Business data context
+    data_section = f"""
+## BUSINESS DATA
+{base_context}
+
+**LOCATION:** Tiruppur, Tamil Nadu, India
+**CURRENCY:** ₹ (INR)
+"""
+    
+    # Build conversation history
+    history_text = ""
+    if conversation_history:
+        for conv in conversation_history[-5:]:
+            user_msg = conv.get('user_message', '')
+            ai_msg = conv.get('ai_response', '')
+            if user_msg and ai_msg:
+                history_text += f"User: {user_msg}\nAssistant: {ai_msg}\n\n"
+    
+    # Combine all sections
+    full_prompt = f"""{persona_base}
+{personality_section}
+{rules_section}
+{external_section}
+{learning_section}
+{data_section}
+
+{history_text}User: {user_message}
+Assistant:"""
+    
+    return full_prompt
+
+
+def chat_with_gemini(client, settings, user_message, conversation_history=None, use_enhanced_prompt=False, original_user_prompt=None, use_v3=True):
+    """Chat with Gemini API. If use_enhanced_prompt=True, user_message is the full instruction+data; no extra system wrap. original_user_prompt used for saving when use_enhanced_prompt. use_v3=True enables TITAN v3 enhancements."""
     
     _save_user = (original_user_prompt or user_message) if use_enhanced_prompt else user_message
     
@@ -204,8 +348,18 @@ def chat_with_gemini(client, settings, user_message, conversation_history=None, 
             # Get BigQuery context
             context = get_bigquery_context(client, settings)
             
-            # TITAN CFO: Ruthless Financial Intelligence Engine
-            system_prompt = f"""You are TITAN CFO. You are NOT a consultant. You are the ruthless Chief Financial Officer for this restaurant.
+            # Try TITAN v3 enhanced prompt if available and enabled
+            if use_v3 and TITAN_V3_AVAILABLE:
+                try:
+                    v3_context = get_titan_v3_context(user_message)
+                    full_prompt = build_titan_v3_prompt(context, v3_context, user_message, conversation_history)
+                except Exception:
+                    # Fall back to standard prompt on any v3 error
+                    use_v3 = False
+            
+            if not use_v3 or not TITAN_V3_AVAILABLE:
+                # Standard TITAN CFO prompt (fallback)
+                system_prompt = f"""You are TITAN CFO. You are NOT a consultant. You are the ruthless Chief Financial Officer for this restaurant.
 
 **RULE 1: NO POLITE FILLER**
 BANNED PHRASES: "Let's work together", "I'd suggest", "You might consider", "Great question", "I'm happy to help", "Let me explain".
@@ -239,18 +393,18 @@ GOOD: "Weekly expense: ₹48,200 (+18% vs last week). Root cause: Unplanned repa
 
 You are a CFO. Numbers. Root causes. Tasks. No fluff. Execute."""
 
-            # Build conversation history
-            history_text = ""
-            if conversation_history:
-                for conv in conversation_history[-5:]:  # Last 5 conversations
-                    user_msg = conv.get('user_message', '')
-                    ai_msg = conv.get('ai_response', '')
-                    if user_msg and ai_msg:
-                        history_text += f"User: {user_msg}\n"
-                        history_text += f"Assistant: {ai_msg}\n\n"
-            
-            # Build full prompt
-            full_prompt = f"{system_prompt}\n\n{history_text}User: {user_message}\nAssistant:"
+                # Build conversation history
+                history_text = ""
+                if conversation_history:
+                    for conv in conversation_history[-5:]:  # Last 5 conversations
+                        user_msg = conv.get('user_message', '')
+                        ai_msg = conv.get('ai_response', '')
+                        if user_msg and ai_msg:
+                            history_text += f"User: {user_msg}\n"
+                            history_text += f"Assistant: {ai_msg}\n\n"
+                
+                # Build full prompt
+                full_prompt = f"{system_prompt}\n\n{history_text}User: {user_message}\nAssistant:"
         
         # Call Gemini API with proper error handling
         url = f"{settings.GEMINI_URL}?key={settings.GEMINI_API_KEY}"
@@ -334,11 +488,12 @@ You are a CFO. Numbers. Root causes. Tasks. No fluff. Execute."""
         return f"Unexpected error: {error_detail}. Please check the logs for details."
 
 
-def chat_with_gemini_stream(client, settings, user_message, conversation_history=None, use_enhanced_prompt=False, original_user_prompt=None):
-    """Stream Gemini response chunks.
+def chat_with_gemini_stream(client, settings, user_message, conversation_history=None, use_enhanced_prompt=False, original_user_prompt=None, use_v3=True):
+    """Stream Gemini response chunks with TITAN v3 enhancements.
 
     Yields incremental text segments as they arrive from Gemini.
     Also saves the full conversation to BigQuery at the end (best-effort).
+    use_v3=True enables TITAN v3 personality, senses, and learning context.
     """
 
     _save_user = (original_user_prompt or user_message) if use_enhanced_prompt else user_message
@@ -350,10 +505,21 @@ def chat_with_gemini_stream(client, settings, user_message, conversation_history
         # Fast path: for tiny greetings, don't run multiple BigQuery queries.
         if msg_trim in ("hi", "hello", "hey", "hai", "namaste") or len(msg_trim) <= 4:
             context = "(No BigQuery context loaded for this short greeting.)"
+            use_v3 = False  # Skip v3 for greetings
         else:
             context = get_bigquery_context(client, settings)
 
-        system_prompt = f"""You are TITAN CFO. You are NOT a consultant. You are the ruthless Chief Financial Officer for this restaurant.
+        # Try TITAN v3 enhanced prompt if available and enabled
+        if use_v3 and TITAN_V3_AVAILABLE:
+            try:
+                v3_context = get_titan_v3_context(user_message)
+                full_prompt = build_titan_v3_prompt(context, v3_context, user_message, conversation_history)
+            except Exception:
+                use_v3 = False  # Fall back on error
+        
+        if not use_v3 or not TITAN_V3_AVAILABLE:
+            # Standard TITAN CFO prompt (fallback)
+            system_prompt = f"""You are TITAN CFO. You are NOT a consultant. You are the ruthless Chief Financial Officer for this restaurant.
 
 **RULE 1: NO POLITE FILLER**
 BANNED PHRASES: "Let's work together", "I'd suggest", "You might consider", "Great question", "I'm happy to help".
@@ -380,16 +546,16 @@ When you identify ANY problem, gap, anomaly, or opportunity, output an action it
 
 You are a CFO. Numbers. Root causes. Tasks. No fluff. Execute."""
 
-        history_text = ""
-        if conversation_history:
-            for conv in conversation_history[-5:]:
-                user_msg = conv.get("user_message", "")
-                ai_msg = conv.get("ai_response", "")
-                if user_msg and ai_msg:
-                    history_text += f"User: {user_msg}\n"
-                    history_text += f"Assistant: {ai_msg}\n\n"
+            history_text = ""
+            if conversation_history:
+                for conv in conversation_history[-5:]:
+                    user_msg = conv.get("user_message", "")
+                    ai_msg = conv.get("ai_response", "")
+                    if user_msg and ai_msg:
+                        history_text += f"User: {user_msg}\n"
+                        history_text += f"Assistant: {ai_msg}\n\n"
 
-        full_prompt = f"{system_prompt}\n\n{history_text}User: {user_message}\nAssistant:"
+            full_prompt = f"{system_prompt}\n\n{history_text}User: {user_message}\nAssistant:"
 
     base_url = getattr(settings, "GEMINI_URL", "")
     if not base_url:
