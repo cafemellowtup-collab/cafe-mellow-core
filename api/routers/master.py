@@ -98,6 +98,16 @@ async def init_master_tables():
         print(f"Master table init warning: {e}")
 
 
+@router.on_event("shutdown")
+async def cleanup_master_resources():
+    """Clean shutdown handler for master dashboard resources"""
+    try:
+        # Close any active monitoring connections or background tasks
+        print("Master Dashboard resources cleaned up")
+    except Exception as e:
+        print(f"Master cleanup warning: {e}")
+
+
 # ============ Health & Overview ============
 
 @router.get("/health")

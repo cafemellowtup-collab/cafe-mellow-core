@@ -36,7 +36,7 @@ export default function PDFExport({ startDate, endDate, variant = "button" }: PD
         throw new Error(data.detail || "Failed to fetch P&L data");
       }
       
-      const data = await res.json();
+      const data = (await res.json()) as { revenue?: number; expenses?: number };
       
       // Generate PDF client-side using html2canvas + jsPDF
       await generatePDFFromData(data);
@@ -49,7 +49,7 @@ export default function PDFExport({ startDate, endDate, variant = "button" }: PD
     }
   }
   
-  async function generatePDFFromData(data: any) {
+  async function generatePDFFromData(data: { revenue?: number; expenses?: number }) {
     // Dynamic import to reduce bundle size
     const { default: jsPDF } = await import("jspdf");
     const doc = new jsPDF();

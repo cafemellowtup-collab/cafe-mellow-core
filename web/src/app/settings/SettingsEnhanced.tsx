@@ -83,7 +83,7 @@ type SystemConfig = {
 
 export default function SettingsEnhanced({ initial }: { initial: ConfigStatus }) {
   const { tenant } = useTenant();
-  const [activeTab, setActiveTab] = useState<"credentials" | "drive" | "users" | "metacognitive" | "system" | "notifications">("credentials");
+  const [activeTab, setActiveTab] = useState<"credentials" | "drive" | "users" | "metacognitive" | "system" | "notifications" | "master">("credentials");
   
   // Credentials
   const [cfg, setCfg] = useState<ConfigStatus>(initial);
@@ -454,7 +454,18 @@ export default function SettingsEnhanced({ initial }: { initial: ConfigStatus })
             }`}
           >
             <SettingsIcon size={16} />
-            System
+            System Config
+          </button>
+          <button
+            onClick={() => setActiveTab("master")}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
+              activeTab === "master"
+                ? "bg-amber-400 text-zinc-950"
+                : "text-zinc-300 hover:bg-white/5"
+            }`}
+          >
+            <Shield size={16} />
+            Master Dashboard
           </button>
         </div>
       </div>
@@ -781,7 +792,7 @@ export default function SettingsEnhanced({ initial }: { initial: ConfigStatus })
             <div className="mt-4 space-y-2">
               {users.length === 0 ? (
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-8 text-center text-sm text-zinc-400">
-                  No users added yet. Click "Add User" to invite team members.
+                  No users added yet. Click &quot;Add User&quot; to invite team members.
                 </div>
               ) : (
                 users.map(user => (
@@ -862,7 +873,12 @@ export default function SettingsEnhanced({ initial }: { initial: ConfigStatus })
                       <label className="text-xs text-zinc-500">Role</label>
                       <select
                         value={newUserRole}
-                        onChange={(e) => setNewUserRole(e.target.value as any)}
+                        onChange={(e) => {
+                          const next = e.target.value;
+                          if (next === "admin" || next === "manager" || next === "analyst" || next === "viewer") {
+                            setNewUserRole(next);
+                          }
+                        }}
                         className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-zinc-200"
                       >
                         <option value="viewer">Viewer - Read-only access</option>
@@ -994,7 +1010,12 @@ export default function SettingsEnhanced({ initial }: { initial: ConfigStatus })
                 <label className="text-xs text-zinc-500">AI Tone</label>
                 <select
                   value={systemConfig.ai_tone}
-                  onChange={(e) => setSystemConfig({...systemConfig, ai_tone: e.target.value as any})}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    if (next === "professional" || next === "friendly" || next === "technical") {
+                      setSystemConfig({ ...systemConfig, ai_tone: next });
+                    }
+                  }}
                   className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-zinc-200"
                 >
                   <option value="professional">Professional</option>
@@ -1076,6 +1097,128 @@ export default function SettingsEnhanced({ initial }: { initial: ConfigStatus })
             >
               {nukeConfirm ? "Click Again to Confirm" : "Clear Database Cache"}
             </button>
+          </div>
+        </div>
+      )}
+      
+      {/* Master Dashboard Tab */}
+      {activeTab === "master" && (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-amber-200">
+              <Shield size={18} className="text-amber-400" />
+              TITAN Master Dashboard Access
+            </div>
+            <div className="mt-1 text-xs text-zinc-400">
+              Super Admin controls for multi-tenant system management, monitoring, and analytics.
+            </div>
+            
+            <div className="mt-4 space-y-3">
+              <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-3">
+                <div>
+                  <div className="text-sm font-semibold text-zinc-200">System Status</div>
+                  <div className="text-xs text-zinc-500">All core systems operational</div>
+                </div>
+                <div className="rounded-full bg-green-500/20 px-3 py-1 text-xs font-semibold text-green-400">
+                  HEALTHY
+                </div>
+              </div>
+              
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
+                  <div className="text-lg font-bold text-white">12</div>
+                  <div className="text-xs text-zinc-500">Total Tenants</div>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
+                  <div className="text-lg font-bold text-green-400">8</div>
+                  <div className="text-xs text-zinc-500">Active Tenants</div>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
+                  <div className="text-lg font-bold text-amber-400">₹440</div>
+                  <div className="text-xs text-zinc-500">Weekly Cost</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="text-sm font-semibold text-zinc-100">Master Dashboard Features</div>
+            <div className="mt-1 text-xs text-zinc-500">
+              Access comprehensive system administration and tenant management tools
+            </div>
+            
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4">
+                <div className="flex items-center gap-2">
+                  <Users size={16} className="text-blue-400" />
+                  <div className="text-sm font-semibold text-blue-200">Tenant Management</div>
+                </div>
+                <div className="mt-2 text-xs text-zinc-400">
+                  Create, manage, and monitor cafe tenants. Control features, plans, and access.
+                </div>
+              </div>
+              
+              <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-4">
+                <div className="flex items-center gap-2">
+                  <Database size={16} className="text-green-400" />
+                  <div className="text-sm font-semibold text-green-200">Usage Analytics</div>
+                </div>
+                <div className="mt-2 text-xs text-zinc-400">
+                  Monitor AI tokens, costs, API usage across all tenants with detailed breakdowns.
+                </div>
+              </div>
+              
+              <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-4">
+                <div className="flex items-center gap-2">
+                  <Zap size={16} className="text-purple-400" />
+                  <div className="text-sm font-semibold text-purple-200">System Health</div>
+                </div>
+                <div className="mt-2 text-xs text-zinc-400">
+                  Real-time monitoring of system performance, uptime, and component health.
+                </div>
+              </div>
+              
+              <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4">
+                <div className="flex items-center gap-2">
+                  <Brain size={16} className="text-cyan-400" />
+                  <div className="text-sm font-semibold text-cyan-200">AI Insights</div>
+                </div>
+                <div className="mt-2 text-xs text-zinc-400">
+                  AI-generated insights about tenant behavior, churn prediction, and optimization.
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-6 flex justify-center">
+              <a
+                href="/master"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 rounded-xl bg-amber-500 px-6 py-3 text-sm font-semibold text-black transition hover:bg-amber-400"
+              >
+                <Shield size={16} />
+                Open Master Dashboard
+                <Link size={14} />
+              </a>
+            </div>
+          </div>
+          
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="text-sm font-semibold text-zinc-100">Quick Actions</div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-zinc-300 hover:bg-white/10">
+                <Plus size={14} className="mr-2 inline" />
+                Add Tenant
+              </button>
+              <button className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-zinc-300 hover:bg-white/10">
+                <RefreshCw size={14} className="mr-2 inline" />
+                System Health Check
+              </button>
+              <button className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-zinc-300 hover:bg-white/10">
+                <Bell size={14} className="mr-2 inline" />
+                View Alerts
+              </button>
+            </div>
           </div>
         </div>
       )}

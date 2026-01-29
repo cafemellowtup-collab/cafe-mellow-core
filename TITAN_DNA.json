@@ -1,6 +1,6 @@
 {
     "project_identity": "TITAN ERP - Cafe Mellow",
-    "last_updated": "2026-01-20 13:28",
+    "last_updated": "2026-01-29 15:16",
     "current_mission": "Production-ready TITAN Command Center: 5-tab UI (Executive Dashboard, Intelligence Chat, User & Rights, API & Config, Evolution Lab), system error logging (file + BigQuery), DNA-driven docs, and continuous evolution via dev_evolution_log.",
     "infrastructure": {
         "editor": "Cursor AI-Native",
@@ -17,19 +17,105 @@
         "config_vault.py",
         "dashboard.py",
         "evolution.py",
+        "expense_analysis_engine.py",
         "system_logger.py",
         "users_roles.py"
     ],
     "root_markdown": [
+        {
+            "file": "ARCHITECTURAL_RESET_COMPLETE.md",
+            "status": "legacy",
+            "last_modified": "2026-01-26 17:46"
+        },
+        {
+            "file": "ARCHITECTURE.md",
+            "status": "legacy",
+            "last_modified": "2026-01-27 18:24"
+        },
+        {
+            "file": "BABY_STEPS_DEPLOY.md",
+            "status": "legacy",
+            "last_modified": "2026-01-26 20:48"
+        },
+        {
+            "file": "BLUEPRINT.md",
+            "status": "legacy",
+            "last_modified": "2026-01-25 15:23"
+        },
         {
             "file": "COMPLETE_IMPLEMENTATION_SUMMARY.md",
             "status": "active",
             "last_modified": "2026-01-20 12:54"
         },
         {
-            "file": "GETTING_STARTED.md",
-            "status": "active",
-            "last_modified": "2026-01-20 01:25"
+            "file": "DEPLOY.md",
+            "status": "legacy",
+            "last_modified": "2026-01-20 13:47"
+        },
+        {
+            "file": "DEPLOYMENT.md",
+            "status": "legacy",
+            "last_modified": "2026-01-26 17:37"
+        },
+        {
+            "file": "DEPLOYMENT_GUIDE.md",
+            "status": "legacy",
+            "last_modified": "2026-01-26 20:41"
+        },
+        {
+            "file": "DEPLOYMENT_TEST_RESULTS.md",
+            "status": "legacy",
+            "last_modified": "2026-01-26 18:56"
+        },
+        {
+            "file": "DEPLOYMENT_VERIFICATION.md",
+            "status": "legacy",
+            "last_modified": "2026-01-26 20:20"
+        },
+        {
+            "file": "EXPENSES_MODULE_SPEC.md",
+            "status": "legacy",
+            "last_modified": "2026-01-20 16:12"
+        },
+        {
+            "file": "FEATURES_SUMMARY.md",
+            "status": "legacy",
+            "last_modified": "2026-01-26 12:04"
+        },
+        {
+            "file": "FINAL_DEPLOYMENT_CHECKLIST.md",
+            "status": "legacy",
+            "last_modified": "2026-01-26 12:05"
+        },
+        {
+            "file": "FINAL_PRODUCTION_DEPLOYMENT.md",
+            "status": "legacy",
+            "last_modified": "2026-01-26 16:24"
+        },
+        {
+            "file": "GENESIS_PROTOCOL.md",
+            "status": "legacy",
+            "last_modified": "2026-01-25 16:11"
+        },
+        {
+            "file": "INTEGRATION_COMPLETE.md",
+            "status": "legacy",
+            "last_modified": "2026-01-25 21:01"
+        },
+        {
+            "file": "LAUNCH_CHECKLIST.md",
+            "status": "legacy",
+            "last_modified": "2026-01-23 20:29"
+        },
+        {
+            "file": "PRODUCTION_DEPLOYMENT.md",
+            "status": "legacy",
+            "last_modified": "2026-01-26 12:02"
+        },
+        {
+            "file": "PRODUCTION_READY.md",
+            "status": "legacy",
+            "last_modified": "2026-01-25 18:26"
         },
         {
             "file": "PROJECT_FLOW_EXPLANATION.md",
@@ -37,44 +123,52 @@
             "last_modified": "2026-01-20 13:27"
         },
         {
-            "file": "README_MASTER.md",
-            "status": "active",
-            "last_modified": "2026-01-20 02:49"
+            "file": "PROJECT_STATUS.md",
+            "status": "legacy",
+            "last_modified": "2026-01-29 15:09"
         },
         {
-            "file": "START_HERE.md",
-            "status": "active",
-            "last_modified": "2026-01-20 12:58"
+            "file": "QUICKSTART.md",
+            "status": "legacy",
+            "last_modified": "2026-01-25 16:11"
         },
         {
-            "file": "SYSTEM_README.md",
-            "status": "active",
-            "last_modified": "2026-01-20 12:59"
+            "file": "README.md",
+            "status": "legacy",
+            "last_modified": "2026-01-27 18:24"
+        },
+        {
+            "file": "README_GENESIS.md",
+            "status": "legacy",
+            "last_modified": "2026-01-25 16:13"
+        },
+        {
+            "file": "START_PRODUCTION.md",
+            "status": "legacy",
+            "last_modified": "2026-01-25 18:26"
+        },
+        {
+            "file": "TITAN_MISSION.md",
+            "status": "legacy",
+            "last_modified": "2026-01-20 15:43"
+        },
+        {
+            "file": "TITAN_VISION.md",
+            "status": "legacy",
+            "last_modified": "2026-01-20 15:43"
         },
         {
             "file": "TITAN_VISION_ROADMAP.md",
             "status": "active",
             "last_modified": "2026-01-20 02:49"
+        },
+        {
+            "file": "VERCEL_DEPLOYMENT_FIX.md",
+            "status": "legacy",
+            "last_modified": "2026-01-27 00:09"
         }
     ],
-    "archived_markdown": [
-        "99_Archive_Legacy/Completed_Docs/ADVANCED_FEATURES_COMPLETE.md",
-        "99_Archive_Legacy/Completed_Docs/API_AUTOMATION_INFO.md",
-        "99_Archive_Legacy/Completed_Docs/APP_STATUS.md",
-        "99_Archive_Legacy/Completed_Docs/BLUEPRINT_PROOF.md",
-        "99_Archive_Legacy/Completed_Docs/CLEANUP_PLAN.md",
-        "99_Archive_Legacy/Completed_Docs/COMPLETED_WORK_SUMMARY.md",
-        "99_Archive_Legacy/Completed_Docs/CRITICAL_FIXES_PLAN.md",
-        "99_Archive_Legacy/Completed_Docs/FINAL_APP_SUMMARY.md",
-        "99_Archive_Legacy/Completed_Docs/IMPLEMENTATION_STATUS.md",
-        "99_Archive_Legacy/Completed_Docs/IMPLEMENTATION_STATUS_V2.md",
-        "99_Archive_Legacy/Completed_Docs/PROGRESS_REPORT.md",
-        "99_Archive_Legacy/Completed_Docs/STEP1_COMPLETE.md",
-        "99_Archive_Legacy/Completed_Docs/STEP2_COMPLETE.md",
-        "99_Archive_Legacy/Completed_Docs/SYSTEM_READY.md",
-        "99_Archive_Legacy/PROJECT_BIBLE.md",
-        "99_Archive_Legacy/SYSTEM_MAP.md"
-    ],
+    "archived_markdown": [],
     "rules": [
         "Expense tagging: Ledger - Category",
         "Automatic Task Queue injection for anomalies",

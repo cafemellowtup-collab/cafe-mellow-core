@@ -13,9 +13,15 @@ from utils.ops_brief import generate_and_store as _generate_and_store_brief
 from utils.ops_brief import get_latest_brief as _get_latest_brief
 from utils.ai_task_queue import generate_and_write_ops_tasks as _generate_and_write_ops_tasks
 
-from api.routers import cron, ledger, analytics, hr, ceo_brief, upload, chat, sync, oracle, forecast, ingester, users, notifications, auth, universal_adapter, semantic_brain, master, reports, intelligence, titan_v3
+from api.routers import cron, ledger, analytics, hr, ceo_brief, upload, chat, sync, oracle, forecast, users, notifications, auth, universal_adapter, semantic_brain, master, reports, intelligence, titan_v3, titan_core
+try:
+    from api.routers import ingester  # type: ignore
+except Exception:
+    ingester = None
 from backend.universal_adapter.airlock import router as airlock_router
 
+# Global scheduler instance for proper cleanup
+scheduler = None
 
 app = FastAPI(
     title="TITAN ERP API", 
@@ -51,6 +57,7 @@ async def global_health():
 @app.on_event("startup")
 async def startup_cron():
     """Initialize background tasks for automated daily sync"""
+    global scheduler
     try:
         from apscheduler.schedulers.asyncio import AsyncIOScheduler
         from apscheduler.triggers.cron import CronTrigger
@@ -78,6 +85,22 @@ async def startup_cron():
         print("✅ Auto-Pilot cron scheduler initialized")
     except Exception as e:
         print(f"⚠️ Cron scheduler failed to start: {e}")
+
+
+@app.on_event("shutdown")
+async def shutdown_cleanup():
+    """Clean shutdown handler for background tasks and connections"""
+    global scheduler
+    try:
+        if scheduler and scheduler.running:
+            scheduler.shutdown(wait=False)
+            print("✅ Cron scheduler shut down cleanly")
+    except Exception as e:
+        print(f"⚠️ Error during scheduler shutdown: {e}")
+    
+    # Allow time for any active connections to close
+    import asyncio
+    await asyncio.sleep(0.1)
 
 async def _run_daily_sync():
     """Background task: Run all data syncs"""
@@ -120,7 +143,8 @@ app.include_router(chat.router)
 app.include_router(sync.router)
 app.include_router(oracle.router)
 app.include_router(forecast.router)
-app.include_router(ingester.router)
+if ingester:
+    app.include_router(ingester.router)
 app.include_router(users.router)
 app.include_router(notifications.router)
 app.include_router(auth.router)
@@ -131,6 +155,7 @@ app.include_router(master.router)
 app.include_router(reports.router)
 app.include_router(intelligence.router)
 app.include_router(titan_v3.router)
+app.include_router(titan_core.router)
 
 app.add_middleware(
     CORSMiddleware,

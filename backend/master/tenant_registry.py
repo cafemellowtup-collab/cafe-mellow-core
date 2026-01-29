@@ -10,11 +10,20 @@ from typing import Optional, Dict, Any, List
 from dataclasses import dataclass, field, asdict
 from enum import Enum
 from google.cloud import bigquery
+from google.auth.exceptions import DefaultCredentialsError
 
 # BigQuery client
 PROJECT_ID = "cafe-mellow-core-2026"
 DATASET_ID = "cafe_operations"
-bq = bigquery.Client(project=PROJECT_ID)
+_bq_init_error: Optional[Exception] = None
+try:
+    bq = bigquery.Client(project=PROJECT_ID)
+except DefaultCredentialsError as e:
+    bq = None
+    _bq_init_error = e
+except Exception as e:
+    bq = None
+    _bq_init_error = e
 
 
 class TenantPlan(str, Enum):

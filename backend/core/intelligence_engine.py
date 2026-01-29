@@ -12,6 +12,7 @@ This is the central nervous system of TITAN ERP.
 """
 
 import json
+import os
 import asyncio
 from datetime import datetime, timedelta, date
 from typing import Dict, Any, List, Optional, Tuple
@@ -20,12 +21,27 @@ from enum import Enum
 import hashlib
 
 from google.cloud import bigquery
+from google.auth.exceptions import DefaultCredentialsError
 
 
 # ============ Configuration ============
 
 PROJECT_ID = "cafe-mellow-core-2026"
 DATASET_ID = "cafe_operations"
+
+
+def _get_bq_client() -> Tuple[Optional[bigquery.Client], Optional[Exception]]:
+    try:
+        key_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "service-key.json")
+        )
+        if os.path.exists(key_path):
+            return bigquery.Client.from_service_account_json(key_path), None
+        return bigquery.Client(project=PROJECT_ID), None
+    except DefaultCredentialsError as e:
+        return None, e
+    except Exception as e:
+        return None, e
 
 
 # ============ Enums ============
@@ -134,7 +150,7 @@ class TitanIntelligenceEngine:
     
     def __init__(self, tenant_id: str = "cafe_mellow_001"):
         self.tenant_id = tenant_id
-        self.bq = bigquery.Client(project=PROJECT_ID)
+        self.bq, self._bq_init_error = _get_bq_client()
         self._metrics_cache: Dict[str, Tuple[BusinessMetrics, datetime]] = {}
         self._cache_ttl = timedelta(minutes=5)
     
@@ -214,6 +230,9 @@ class TitanIntelligenceEngine:
             timestamp=datetime.now(),
             tenant_id=self.tenant_id
         )
+        
+        if not self.bq:
+            return metrics
         
         try:
             # Parallel queries for performance
@@ -386,6 +405,8 @@ class TitanIntelligenceEngine:
     
     async def get_learned_patterns(self, limit: int = 10) -> List[Dict[str, Any]]:
         """Get learned patterns and rules for the tenant"""
+        if not self.bq:
+            return []
         try:
             query = f"""
                 SELECT 
@@ -406,6 +427,8 @@ class TitanIntelligenceEngine:
     
     async def get_active_alerts(self, limit: int = 5) -> List[Dict[str, Any]]:
         """Get active alerts for the tenant"""
+        if not self.bq:
+            return []
         try:
             query = f"""
                 SELECT 
@@ -556,6 +579,8 @@ USER QUERY: {query}
         feedback: Optional[str] = None
     ):
         """Learn from user interactions"""
+        if not self.bq:
+            return
         try:
             # Extract patterns from successful interactions
             interaction_hash = hashlib.md5(f"{query}:{response}".encode()).hexdigest()[:16]
@@ -632,13 +657,16 @@ USER QUERY: {query}
     
     async def health_check(self) -> Dict[str, Any]:
         """Check intelligence engine health"""
-        try:
-            # Test BigQuery connection
-            self.bq.query("SELECT 1").result()
-            bq_status = "healthy"
-        except Exception as e:
-            bq_status = f"error: {str(e)[:50]}"
-        
+        if not self.bq:
+            bq_status = "not_configured"
+        else:
+            try:
+                # Test BigQuery connection
+                self.bq.query("SELECT 1").result()
+                bq_status = "healthy"
+            except Exception as e:
+                bq_status = f"error: {str(e)[:50]}"
+         
         return {
             "status": "healthy" if bq_status == "healthy" else "degraded",
             "tenant_id": self.tenant_id,

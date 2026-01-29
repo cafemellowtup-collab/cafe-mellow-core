@@ -36,7 +36,7 @@ import {
 
 interface ParsedData {
   type: "kpi" | "table" | "chart" | "task" | "finding" | "action" | "text";
-  content: any;
+  content: unknown;
 }
 
 interface KPIData {
@@ -55,7 +55,7 @@ interface TableData {
 interface ChartData {
   type: "line" | "bar" | "pie" | "area";
   title: string;
-  data: Record<string, any>[];
+  data: Record<string, unknown>[];
   xKey: string;
   yKey: string | string[];
 }
@@ -389,7 +389,7 @@ function DataChart({ chart }: { chart: ChartData }) {
         </div>
       )}
       <ResponsiveContainer width="100%" height={200}>
-        {renderChart() as any}
+        {renderChart()}
       </ResponsiveContainer>
     </div>
   );
@@ -471,7 +471,7 @@ export default function AIResponseFormatter({ content, onTaskAssign }: AIRespons
     const chart = extractChartData(content);
 
     // Remove extracted structured content from text for cleaner display
-    let cleanText = content;
+    const cleanText = content;
     
     // Don't clean text for now - show both structured and raw
     // This ensures nothing is lost while adding visualizations

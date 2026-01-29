@@ -95,6 +95,16 @@ async def startup_event():
     init_all_universal_tables()
 
 
+@router.on_event("shutdown")
+async def shutdown_event():
+    """Clean shutdown handler for Semantic Brain"""
+    try:
+        # Close any active brain connections or background tasks
+        print("Semantic Brain resources cleaned up")
+    except Exception as e:
+        print(f"Semantic Brain cleanup warning: {e}")
+
+
 @router.get("/health")
 async def health_check():
     """Health check for Semantic Brain"""

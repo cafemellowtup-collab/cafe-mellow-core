@@ -17,6 +17,7 @@ from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 import os
+from google.auth.exceptions import DefaultCredentialsError
 
 from google.cloud import bigquery
 
@@ -24,6 +25,20 @@ try:
     import google.generativeai as genai
 except ImportError:
     genai = None
+
+
+def _get_bq_client(project_id: str) -> Tuple[Optional[bigquery.Client], Optional[Exception]]:
+    try:
+        key_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "..", "service-key.json")
+        )
+        if os.path.exists(key_path):
+            return bigquery.Client.from_service_account_json(key_path), None
+        return bigquery.Client(project=project_id), None
+    except DefaultCredentialsError as e:
+        return None, e
+    except Exception as e:
+        return None, e
 
 
 class LearningType(str, Enum):
@@ -82,7 +97,7 @@ class EvolutionCore:
     
     def __init__(self, tenant_id: str = "default"):
         self.tenant_id = tenant_id
-        self.bq_client = bigquery.Client(project=self.PROJECT_ID)
+        self.bq_client, self._bq_init_error = _get_bq_client(self.PROJECT_ID)
         
         api_key = os.getenv("GEMINI_API_KEY")
         if api_key and genai:
@@ -91,11 +106,14 @@ class EvolutionCore:
         else:
             self.model = None
         
-        self._ensure_tables_exist()
+        if self.bq_client:
+            self._ensure_tables_exist()
         self._learning_cache: Dict[str, Learning] = {}
     
     def _ensure_tables_exist(self):
         """Create evolution tables"""
+        if not self.bq_client:
+            return
         # Learnings table
         learnings_schema = [
             bigquery.SchemaField("learning_id", "STRING", mode="REQUIRED"),
@@ -151,6 +169,8 @@ class EvolutionCore:
         feedback: Optional[str] = None
     ) -> str:
         """Record an interaction for learning"""
+        if not self.bq_client:
+            return ""
         interaction_id = hashlib.md5(
             f"{self.tenant_id}:{datetime.now().isoformat()}:{user_query[:50]}".encode()
         ).hexdigest()[:16]
@@ -330,6 +350,9 @@ Format as JSON:
         source_interaction: str
     ):
         """Store a learning in the database"""
+        if not self.bq_client:
+            return
+        
         learning_id = hashlib.md5(
             f"{learning_type.value}:{content[:100]}".encode()
         ).hexdigest()[:16]
@@ -376,6 +399,8 @@ Format as JSON:
         limit: int = 5
     ) -> List[Learning]:
         """Get learnings relevant to a query"""
+        if not self.bq_client:
+            return []
         type_filter = ""
         if learning_types:
             types = ", ".join([f"'{lt.value}'" for lt in learning_types])
@@ -456,6 +481,8 @@ Format as JSON:
     
     def validate_learning(self, learning_id: str, is_valid: bool):
         """Validate or contradict a learning based on new evidence"""
+        if not self.bq_client:
+            return
         field = "times_validated" if is_valid else "times_contradicted"
         
         sql = f"""
@@ -482,6 +509,16 @@ Format as JSON:
     
     def get_evolution_metrics(self) -> EvolutionMetrics:
         """Get metrics about TITAN's evolution"""
+        if not self.bq_client:
+            return EvolutionMetrics(
+                total_learnings=0,
+                proven_learnings=0,
+                active_hypotheses=0,
+                avg_confidence=0,
+                learning_velocity=0,
+                accuracy_trend="unknown",
+                top_learning_areas=[],
+            )
         sql = f"""
         SELECT
             COUNT(*) as total_learnings,

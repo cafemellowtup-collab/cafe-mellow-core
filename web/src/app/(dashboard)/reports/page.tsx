@@ -45,14 +45,24 @@ interface ReportTemplate {
   refresh_frequency: string;
 }
 
+type ReportPeriod = {
+  start_date?: string;
+  end_date?: string;
+  date?: string;
+  [key: string]: unknown;
+};
+
 interface Report {
   report_type: string;
   generated_at: string;
-  period: Record<string, any>;
-  summary?: Record<string, any>;
+  period: ReportPeriod;
+  summary?: Record<string, unknown>;
   insights?: string[];
-  charts?: Record<string, any>;
-  [key: string]: any;
+  charts?: Record<string, unknown>;
+  profit_loss?: Record<string, number | string>;
+  ai_analysis?: string;
+  expense_breakdown?: Array<{ category: string; count: number; total: number }>;
+  [key: string]: unknown;
 }
 
 const CHART_COLORS = ["#34d399", "#22d3ee", "#a78bfa", "#f472b6", "#fbbf24"];
@@ -200,10 +210,25 @@ export default function ReportsPage() {
 
   const formatCurrency = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 
-  const renderChart = (chartConfig: any) => {
-    if (!chartConfig || !chartConfig.data || chartConfig.data.length === 0) return null;
+  type ChartType = "line" | "bar" | "area" | "pie";
+  type ChartConfig = {
+    type: ChartType;
+    data: Array<Record<string, unknown>>;
+    xKey: string;
+    yKey: string;
+    title: string;
+  };
 
-    const { type, data, xKey, yKey, title } = chartConfig;
+  const renderChart = (chartConfig: unknown) => {
+    if (!chartConfig || typeof chartConfig !== "object") return null;
+    const cfg = chartConfig as Partial<ChartConfig>;
+    if (!cfg.type || !cfg.data || !Array.isArray(cfg.data) || cfg.data.length === 0) return null;
+
+    const type = cfg.type;
+    const data = cfg.data;
+    const xKey = cfg.xKey ?? "name";
+    const yKey = cfg.yKey ?? "value";
+    const title = cfg.title ?? "Chart";
 
     return (
       <div className="rounded-xl border border-white/10 bg-black/30 p-4">
@@ -236,7 +261,7 @@ export default function ReportsPage() {
           ) : type === "pie" ? (
             <RechartsPie>
               <Pie data={data} dataKey={yKey} nameKey={xKey} cx="50%" cy="50%" outerRadius={70} label={({ name }) => name}>
-                {data.map((_: any, index: number) => (
+                {data.map((_, index: number) => (
                   <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                 ))}
               </Pie>
@@ -434,7 +459,7 @@ export default function ReportsPage() {
                         : key.includes("margin") || key.includes("percentage")
                           ? `${value}%`
                           : value.toLocaleString()
-                      : value
+                      : String(value ?? "")
                     }
                   </div>
                 </div>
@@ -517,7 +542,7 @@ export default function ReportsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {report.expense_breakdown.map((item: any, i: number) => (
+                    {report.expense_breakdown.map((item, i: number) => (
                       <tr key={i} className="hover:bg-white/5">
                         <td className="px-4 py-2 text-sm text-white">{item.category}</td>
                         <td className="px-4 py-2 text-right text-sm text-zinc-400">{item.count}</td>

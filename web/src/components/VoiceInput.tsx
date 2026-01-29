@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Mic, MicOff, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -18,23 +18,24 @@ export default function VoiceInput({
   language = "en-IN" 
 }: VoiceInputProps) {
   const [isListening, setIsListening] = useState(false);
-  const [isSupported, setIsSupported] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [interimTranscript, setInterimTranscript] = useState("");
-  
+
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  
+
+  const isSupported = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  }, []);
+
   useEffect(() => {
-    // Check if Web Speech API is supported
+    if (!isSupported) return;
+
     if (typeof window !== "undefined") {
-      const SpeechRecognition = 
-        (window as any).SpeechRecognition || 
-        (window as any).webkitSpeechRecognition;
+      const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
       
-      if (SpeechRecognition) {
-        setIsSupported(true);
-        
-        const recognition = new SpeechRecognition();
+      if (SpeechRecognitionCtor) {
+        const recognition = new SpeechRecognitionCtor();
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.lang = language;
@@ -102,9 +103,9 @@ export default function VoiceInput({
   };
   
   if (!isSupported) {
-    return null; // Hide if not supported
+    return null;
   }
-  
+
   return (
     <div className="relative">
       <motion.button

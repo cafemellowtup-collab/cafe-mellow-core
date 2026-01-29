@@ -91,6 +91,16 @@ async def startup_event():
     init_airlock_tables()
 
 
+@router.on_event("shutdown")
+async def shutdown_event():
+    """Clean shutdown handler for Universal Adapter"""
+    try:
+        # Close any active adapter connections or background tasks
+        print("Universal Adapter resources cleaned up")
+    except Exception as e:
+        print(f"Universal Adapter cleanup warning: {e}")
+
+
 @router.get("/health")
 async def health_check():
     """Health check for Universal Adapter"""

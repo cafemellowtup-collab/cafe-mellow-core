@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode } from "react";
 
 export type TenantConfig = {
   org_id: string;
@@ -42,20 +42,19 @@ const DEFAULT_LOCATIONS: TenantConfig[] = [
 ];
 
 export function TenantProvider({ children }: { children: ReactNode }) {
-  const [tenant, setTenantState] = useState<TenantConfig>(DEFAULT_LOCATIONS[0]);
-  const [availableLocations] = useState<TenantConfig[]>(DEFAULT_LOCATIONS);
-
-  useEffect(() => {
+  const [tenant, setTenantState] = useState<TenantConfig>(() => {
+    if (typeof window === "undefined") return DEFAULT_LOCATIONS[0];
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        const parsed = JSON.parse(stored) as TenantConfig;
-        setTenantState(parsed);
+        return JSON.parse(stored) as TenantConfig;
       }
     } catch {
       // ignore
     }
-  }, []);
+    return DEFAULT_LOCATIONS[0];
+  });
+  const [availableLocations] = useState<TenantConfig[]>(DEFAULT_LOCATIONS);
 
   const setTenant = (newTenant: TenantConfig) => {
     setTenantState(newTenant);

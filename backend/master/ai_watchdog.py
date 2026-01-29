@@ -9,10 +9,169 @@ from typing import Optional, Dict, Any, List
 from dataclasses import dataclass, field
 from enum import Enum
 from google.cloud import bigquery
+from google.auth.exceptions import DefaultCredentialsError
 
 PROJECT_ID = "cafe-mellow-core-2026"
 DATASET_ID = "cafe_operations"
-bq = bigquery.Client(project=PROJECT_ID)
+_bq_init_error: Optional[Exception] = None
+try:
+    bq = bigquery.Client(project=PROJECT_ID)
+except DefaultCredentialsError as e:
+    bq = None
+    _bq_init_error = e
+except Exception as e:
+    bq = None
+    _bq_init_error = e
+
+
+@dataclass
+class AIInsight:
+    """AI-generated insight about a tenant or system"""
+    insight_id: str
+    insight_type: InsightType
+    priority: InsightPriority
+    tenant_id: Optional[str]
+    title: str
+    description: str
+    recommendation: str
+    data: Dict[str, Any] = field(default_factory=dict)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    acknowledged: bool = False
+    acknowledged_by: Optional[str] = None
+    acknowledged_at: Optional[datetime] = None
+
+
+class AIWatchdog:
+    """
+    AI-powered proactive monitoring and insights generation
+    """
+    
+    TABLE_ID = f"{PROJECT_ID}.{DATASET_ID}.ai_insights"
+    
+    @classmethod
+    def init_tables(cls):
+        """Initialize AI watchdog tables"""
+        schema = [
+            bigquery.SchemaField("insight_id", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("insight_type", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("priority", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("tenant_id", "STRING"),
+            bigquery.SchemaField("title", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("description", "STRING"),
+            bigquery.SchemaField("recommendation", "STRING"),
+            bigquery.SchemaField("data", "JSON"),
+            bigquery.SchemaField("created_at", "TIMESTAMP", mode="REQUIRED"),
+            bigquery.SchemaField("acknowledged", "BOOL"),
+            bigquery.SchemaField("acknowledged_by", "STRING"),
+            bigquery.SchemaField("acknowledged_at", "TIMESTAMP"),
+        ]
+        
+        table = bigquery.Table(cls.TABLE_ID, schema=schema)
+        try:
+            if bq:
+                bq.create_table(table)
+                print(f"Created table {cls.TABLE_ID}")
+        except Exception as e:
+            if "Already Exists" in str(e):
+                print(f"Table {cls.TABLE_ID} already exists")
+            else:
+                raise e
+    
+    @classmethod
+    def get_insights(
+        cls,
+        tenant_id: Optional[str] = None,
+        insight_type: Optional[InsightType] = None,
+        priority: Optional[InsightPriority] = None,
+        unacknowledged_only: bool = False,
+        limit: int = 50,
+    ) -> List[AIInsight]:
+        """Get AI insights with filters - Mock implementation"""
+        # Mock insights for demonstration
+        mock_insights = [
+            AIInsight(
+                insight_id="insight_001",
+                insight_type=InsightType.GROWTH_OPPORTUNITY,
+                priority=InsightPriority.HIGH,
+                tenant_id="tenant_001",
+                title="Revenue Growth Opportunity",
+                description="Coffee sales showing 25% growth trend",
+                recommendation="Consider expanding coffee menu offerings",
+                data={"growth_rate": 25.3, "category": "beverages"}
+            ),
+            AIInsight(
+                insight_id="insight_002",
+                insight_type=InsightType.COST_ALERT,
+                priority=InsightPriority.MEDIUM,
+                tenant_id="tenant_002",
+                title="Ingredient Cost Increase",
+                description="Milk prices increased by 8% this month",
+                recommendation="Consider bulk purchasing or alternative suppliers",
+                data={"cost_increase": 8.2, "category": "ingredients"}
+            )
+        ]
+        
+        # Apply filters
+        filtered = mock_insights
+        if tenant_id:
+            filtered = [i for i in filtered if i.tenant_id == tenant_id]
+        if insight_type:
+            filtered = [i for i in filtered if i.insight_type == insight_type]
+        if priority:
+            filtered = [i for i in filtered if i.priority == priority]
+        if unacknowledged_only:
+            filtered = [i for i in filtered if not i.acknowledged]
+            
+        return filtered[:limit]
+    
+    @classmethod
+    def acknowledge_insight(cls, insight_id: str, admin_id: str) -> bool:
+        """Acknowledge an insight - Mock implementation"""
+        return True
+    
+    @classmethod
+    def get_daily_digest(cls) -> Dict[str, Any]:
+        """Get AI-generated daily digest - Mock implementation"""
+        return {
+            "date": datetime.now().strftime("%Y-%m-%d"),
+            "summary": "System health excellent, 2 growth opportunities identified",
+            "key_insights": [
+                "Coffee sales trending up 25%",
+                "Milk costs increased 8% - action recommended"
+            ],
+            "recommendations": [
+                "Expand coffee menu offerings",
+                "Review milk suppliers for cost optimization"
+            ],
+            "tenant_count": 12,
+            "alerts_generated": 3,
+            "opportunities_found": 2
+        }
+    
+    @classmethod
+    def run_daily_analysis(cls) -> List[AIInsight]:
+        """Run AI analysis on all tenants - Mock implementation"""
+        insights = [
+            AIInsight(
+                insight_id="daily_001",
+                insight_type=InsightType.HIGH_PERFORMER,
+                priority=InsightPriority.LOW,
+                tenant_id="tenant_001",
+                title="Exceptional Performance",
+                description="Tenant achieving 95% efficiency metrics",
+                recommendation="Consider featuring as case study"
+            ),
+            AIInsight(
+                insight_id="daily_002",
+                insight_type=InsightType.ENGAGEMENT_DROP,
+                priority=InsightPriority.MEDIUM,
+                tenant_id="tenant_003",
+                title="Usage Decline",
+                description="20% drop in AI chat usage last week",
+                recommendation="Proactive outreach to understand needs"
+            )
+        ]
+        return insights
 
 
 class InsightType(str, Enum):

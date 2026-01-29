@@ -2,6 +2,8 @@
 
 import { motion } from "framer-motion";
 
+const CHART_BAR_HEIGHTS = [42, 78, 56, 64, 35, 88, 51];
+
 interface SkeletonProps {
   className?: string;
   style?: React.CSSProperties;
@@ -73,7 +75,7 @@ export function ChartSkeleton() {
           <Skeleton
             key={i}
             className="flex-1"
-            style={{ height: `${30 + Math.random() * 70}%` }}
+            style={{ height: `${CHART_BAR_HEIGHTS[i % CHART_BAR_HEIGHTS.length]}%` }}
           />
         ))}
       </div>

@@ -16,8 +16,10 @@ from dataclasses import dataclass, field
 from datetime import datetime
 import json
 import hashlib
+import os
 
 from google.cloud import bigquery
+from google.auth.exceptions import DefaultCredentialsError
 
 
 class RelationshipType(str, Enum):
@@ -89,15 +91,35 @@ class GraphRAG:
     
     PROJECT_ID = "cafe-mellow-core-2026"
     DATASET_ID = "cafe_operations"
-    
+
+
+    def _get_bq_client(project_id: str) -> Tuple[Optional[bigquery.Client], Optional[Exception]]:
+        try:
+            key_path = os.path.abspath(
+                os.path.join(os.path.dirname(__file__), "..", "..", "..", "service-key.json")
+            )
+            if os.path.exists(key_path):
+                return bigquery.Client.from_service_account_json(key_path), None
+            return bigquery.Client(project=project_id), None
+        except DefaultCredentialsError as e:
+            return None, e
+        except Exception as e:
+            return None, e
+
+
     def __init__(self, tenant_id: str = "default"):
         self.tenant_id = tenant_id
-        self.client = bigquery.Client(project=self.PROJECT_ID)
-        self._ensure_tables_exist()
-    
+        self.client, self._bq_init_error = self._get_bq_client(self.PROJECT_ID)
+        if self.client:
+            self._ensure_tables_exist()
+
+
     def _ensure_tables_exist(self):
         """Create graph tables if they don't exist"""
-        
+
+        if not self.client:
+            return
+
         # Nodes table
         nodes_schema = [
             bigquery.SchemaField("node_id", "STRING", mode="REQUIRED"),
@@ -109,7 +131,7 @@ class GraphRAG:
             bigquery.SchemaField("created_at", "TIMESTAMP"),
             bigquery.SchemaField("updated_at", "TIMESTAMP"),
         ]
-        
+
         # Edges table
         edges_schema = [
             bigquery.SchemaField("edge_id", "STRING", mode="REQUIRED"),
@@ -121,12 +143,12 @@ class GraphRAG:
             bigquery.SchemaField("properties", "JSON"),
             bigquery.SchemaField("created_at", "TIMESTAMP"),
         ]
-        
+
         tables = {
             "titan_graph_nodes": nodes_schema,
             "titan_graph_edges": edges_schema,
         }
-        
+
         for table_name, schema in tables.items():
             table_ref = f"{self.PROJECT_ID}.{self.DATASET_ID}.{table_name}"
             try:
@@ -134,11 +156,14 @@ class GraphRAG:
             except Exception:
                 table = bigquery.Table(table_ref, schema=schema)
                 self.client.create_table(table)
-    
+
+
     def add_node(self, node: GraphNode) -> str:
         """Add a node to the graph"""
+        if not self.client:
+            raise Exception("BigQuery not connected")
         table_ref = f"{self.PROJECT_ID}.{self.DATASET_ID}.titan_graph_nodes"
-        
+
         row = {
             "node_id": node.node_id,
             "tenant_id": self.tenant_id,
@@ -149,17 +174,20 @@ class GraphRAG:
             "created_at": datetime.now().isoformat(),
             "updated_at": datetime.now().isoformat(),
         }
-        
+
         errors = self.client.insert_rows_json(table_ref, [row])
         if errors:
             raise Exception(f"Failed to insert node: {errors}")
-        
+
         return node.node_id
-    
+
+
     def add_edge(self, edge: GraphEdge) -> str:
         """Add an edge (relationship) to the graph"""
+        if not self.client:
+            raise Exception("BigQuery not connected")
         table_ref = f"{self.PROJECT_ID}.{self.DATASET_ID}.titan_graph_edges"
-        
+
         row = {
             "edge_id": edge.edge_id,
             "tenant_id": self.tenant_id,
@@ -170,13 +198,14 @@ class GraphRAG:
             "properties": edge.properties,
             "created_at": datetime.now().isoformat(),
         }
-        
+
         errors = self.client.insert_rows_json(table_ref, [row])
         if errors:
             raise Exception(f"Failed to insert edge: {errors}")
-        
+
         return edge.edge_id
-    
+
+
     def add_relationship(
         self,
         source_name: str,
@@ -188,12 +217,12 @@ class GraphRAG:
         properties: Optional[Dict] = None
     ) -> Tuple[str, str, str]:
         """Convenience method to add nodes and edge in one call"""
-        
+
         # Create node IDs
         source_id = hashlib.md5(f"{source_type.value}:{source_name}".encode()).hexdigest()[:16]
         target_id = hashlib.md5(f"{target_type.value}:{target_name}".encode()).hexdigest()[:16]
         edge_id = hashlib.md5(f"{source_id}:{relationship.value}:{target_id}".encode()).hexdigest()[:16]
-        
+
         # Add nodes (idempotent)
         source_node = GraphNode(
             node_id=source_id,
@@ -205,17 +234,17 @@ class GraphRAG:
             node_type=target_type,
             name=target_name,
         )
-        
+
         try:
             self.add_node(source_node)
         except:
             pass  # Node might already exist
-            
+
         try:
             self.add_node(target_node)
         except:
             pass  # Node might already exist
-        
+
         # Add edge
         edge = GraphEdge(
             edge_id=edge_id,
@@ -225,14 +254,15 @@ class GraphRAG:
             weight=weight,
             properties=properties or {},
         )
-        
+
         try:
             self.add_edge(edge)
         except:
             pass  # Edge might already exist
-        
+
         return source_id, target_id, edge_id
-    
+
+
     def traverse_impact(
         self,
         start_node_name: str,
@@ -241,15 +271,17 @@ class GraphRAG:
     ) -> List[Dict[str, Any]]:
         """
         Traverse the graph to find impact of a node using Recursive CTE
-        
+
         Example: "What is the impact of Supplier X's delay?"
         """
-        
+        if not self.client:
+            return [{"error": "BigQuery not connected"}]
+
         rel_filter = ""
         if relationship_filter:
             rels = ", ".join([f"'{r.value}'" for r in relationship_filter])
             rel_filter = f"AND e.relationship IN ({rels})"
-        
+
         query = f"""
         WITH RECURSIVE impact_chain AS (
             -- Base case: start node
@@ -264,9 +296,9 @@ class GraphRAG:
             FROM `{self.PROJECT_ID}.{self.DATASET_ID}.titan_graph_nodes` n
             WHERE n.tenant_id = '{self.tenant_id}'
                 AND LOWER(n.name) LIKE LOWER('%{start_node_name}%')
-            
+
             UNION ALL
-            
+
             -- Recursive case: traverse edges
             SELECT 
                 n.node_id,
@@ -299,13 +331,14 @@ class GraphRAG:
         WHERE depth > 1
         ORDER BY depth, cumulative_weight DESC
         """
-        
+
         try:
             results = self.client.query(query).result()
             return [dict(row) for row in results]
         except Exception as e:
             return [{"error": str(e)}]
-    
+
+
     def find_connections(
         self,
         node_a_name: str,
@@ -314,10 +347,12 @@ class GraphRAG:
     ) -> List[Dict[str, Any]]:
         """
         Find paths connecting two nodes
-        
+
         Example: "How does Weather affect my Sales?"
         """
-        
+        if not self.client:
+            return [{"error": "BigQuery not connected"}]
+
         query = f"""
         WITH RECURSIVE path_finder AS (
             -- Base case: start from node A
@@ -330,9 +365,9 @@ class GraphRAG:
             FROM `{self.PROJECT_ID}.{self.DATASET_ID}.titan_graph_nodes` n
             WHERE n.tenant_id = '{self.tenant_id}'
                 AND LOWER(n.name) LIKE LOWER('%{node_a_name}%')
-            
+
             UNION ALL
-            
+
             -- Recursive: follow edges
             SELECT 
                 n.node_id,
@@ -358,20 +393,23 @@ class GraphRAG:
         ORDER BY depth
         LIMIT 5
         """
-        
+
         try:
             results = self.client.query(query).result()
             return [dict(row) for row in results]
         except Exception as e:
             return [{"error": str(e)}]
-    
+
+
     def get_node_neighbors(
         self,
         node_name: str,
         direction: str = "outgoing"  # outgoing, incoming, both
     ) -> List[Dict[str, Any]]:
         """Get immediate neighbors of a node"""
-        
+        if not self.client:
+            return [{"error": "BigQuery not connected"}]
+
         if direction == "outgoing":
             join_condition = "e.source_id = n1.node_id AND e.target_id = n2.node_id"
         elif direction == "incoming":

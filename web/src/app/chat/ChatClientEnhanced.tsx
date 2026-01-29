@@ -13,7 +13,7 @@ type Msg = {
   role: "user" | "assistant";
   content: string;
   status?: string;
-  chart?: { type: "line" | "bar"; data: any[]; xKey: string; yKey: string; title: string };
+  chart?: { type: "line" | "bar"; data: Array<Record<string, unknown>>; xKey: string; yKey: string; title: string };
 };
 
 type ChatSession = {

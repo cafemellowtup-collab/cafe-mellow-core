@@ -58,15 +58,18 @@ const rolePermissions: Record<UserRole, Permission[]> = {
 };
 
 export function RBACProvider({ children }: { children: ReactNode }) {
-  const [role, setRole] = useState<UserRole>("ceo");
-  
-  // Load role from localStorage on mount
-  useEffect(() => {
-    const savedRole = localStorage.getItem("titan_user_role");
-    if (savedRole && (savedRole === "ceo" || savedRole === "manager" || savedRole === "staff" || savedRole === "viewer")) {
-      setRole(savedRole);
+  const [role, setRole] = useState<UserRole>(() => {
+    if (typeof window === "undefined") return "ceo";
+    try {
+      const savedRole = localStorage.getItem("titan_user_role");
+      if (savedRole && (savedRole === "ceo" || savedRole === "manager" || savedRole === "staff" || savedRole === "viewer")) {
+        return savedRole;
+      }
+    } catch {
+      // ignore
     }
-  }, []);
+    return "ceo";
+  });
   
   // Save role to localStorage when changed
   useEffect(() => {
@@ -108,7 +111,7 @@ export function withPermission<P extends object>(
         <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-center">
           <div className="text-sm font-semibold text-red-200">Access Denied</div>
           <div className="mt-1 text-xs text-red-300">
-            You don't have permission to access this feature
+            You don&apos;t have permission to access this feature
           </div>
         </div>
       );

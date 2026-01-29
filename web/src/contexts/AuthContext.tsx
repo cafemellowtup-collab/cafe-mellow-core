@@ -29,46 +29,57 @@ const USER_KEY = "titan.auth.user";
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Load stored auth on mount
-  useEffect(() => {
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window === "undefined") return null;
     try {
-      const storedToken = localStorage.getItem(TOKEN_KEY);
       const storedUser = localStorage.getItem(USER_KEY);
-      
-      if (storedToken && storedUser) {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
-        
-        // Verify token is still valid
-        fetch(`${API_BASE}/api/v1/auth/verify`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${storedToken}` }
-        })
-          .then(res => res.json())
-          .then(data => {
-            if (!data.valid) {
-              // Token expired, clear auth
-              localStorage.removeItem(TOKEN_KEY);
-              localStorage.removeItem(USER_KEY);
-              setToken(null);
-              setUser(null);
-            }
-          })
-          .catch(() => {
-            // API error, keep local auth (offline mode)
-          })
-          .finally(() => setIsLoading(false));
-      } else {
-        setIsLoading(false);
-      }
+      return storedUser ? (JSON.parse(storedUser) as User) : null;
     } catch {
-      setIsLoading(false);
+      return null;
     }
-  }, []);
+  });
+  const [token, setToken] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      return localStorage.getItem(TOKEN_KEY);
+    } catch {
+      return null;
+    }
+  });
+  const [isLoading, setIsLoading] = useState(() => {
+    if (typeof window === "undefined") return true;
+    try {
+      return !!(localStorage.getItem(TOKEN_KEY) && localStorage.getItem(USER_KEY));
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    if (!token || !user) return;
+
+    fetch(`${API_BASE}/api/v1/auth/verify`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data?.valid) {
+          try {
+            localStorage.removeItem(TOKEN_KEY);
+            localStorage.removeItem(USER_KEY);
+          } catch {
+            // ignore
+          }
+          setToken(null);
+          setUser(null);
+        }
+      })
+      .catch(() => {
+        // API error, keep local auth (offline mode)
+      })
+      .finally(() => setIsLoading(false));
+  }, [token, user]);
 
   const login = useCallback(async (email: string, password: string) => {
     try {
@@ -93,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       return { ok: false, error: data.message || "Login failed" };
-    } catch (e) {
+    } catch {
       return { ok: false, error: "Network error. Please try again." };
     }
   }, []);
@@ -133,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       return { ok: false, error: data.message || "Signup failed" };
-    } catch (e) {
+    } catch {
       return { ok: false, error: "Network error. Please try again." };
     }
   }, []);
@@ -141,8 +152,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     setToken(null);
     setUser(null);
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+    try {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+    } catch {
+      // ignore
+    }
     
     // Call logout endpoint (fire and forget)
     fetch(`${API_BASE}/api/v1/auth/logout`, {

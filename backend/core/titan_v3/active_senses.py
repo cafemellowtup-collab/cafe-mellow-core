@@ -16,13 +16,28 @@ import os
 import asyncio
 import aiohttp
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 import json
 import hashlib
 
 from google.cloud import bigquery
+from google.auth.exceptions import DefaultCredentialsError
+
+
+def _get_bq_client(project_id: str) -> Tuple[Optional[bigquery.Client], Optional[Exception]]:
+    try:
+        key_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "..", "service-key.json")
+        )
+        if os.path.exists(key_path):
+            return bigquery.Client.from_service_account_json(key_path), None
+        return bigquery.Client(project=project_id), None
+    except DefaultCredentialsError as e:
+        return None, e
+    except Exception as e:
+        return None, e
 
 
 class SenseType(str, Enum):
@@ -113,11 +128,14 @@ class ActiveSenses:
     
     def __init__(self, location: str = "Bangalore, India"):
         self.location = location
-        self.bq_client = bigquery.Client(project=self.PROJECT_ID)
-        self._ensure_tables_exist()
+        self.bq_client, self._bq_init_error = _get_bq_client(self.PROJECT_ID)
+        if self.bq_client:
+            self._ensure_tables_exist()
     
     def _ensure_tables_exist(self):
         """Create sense readings table"""
+        if not self.bq_client:
+            return
         schema = [
             bigquery.SchemaField("reading_id", "STRING", mode="REQUIRED"),
             bigquery.SchemaField("sense_type", "STRING"),
@@ -353,6 +371,8 @@ class ActiveSenses:
     
     def _log_reading(self, reading: SenseReading):
         """Log sense reading to BigQuery"""
+        if not self.bq_client:
+            return
         reading_id = hashlib.md5(
             f"{reading.sense_type.value}:{reading.timestamp.isoformat()}".encode()
         ).hexdigest()[:16]

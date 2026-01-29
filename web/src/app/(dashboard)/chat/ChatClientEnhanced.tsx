@@ -7,6 +7,7 @@ import { API_BASE_URL } from "@/lib/api";
 import { useTenant } from "@/contexts/TenantContext";
 import SmartMarkdown from "@/components/SmartMarkdown";
 import AIResponseFormatter, { TaskData } from "@/components/AIResponseFormatter";
+import VisualResponse, { TitanEnvelope, TitanSuggestedTask } from "@/components/VisualResponse";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import "highlight.js/styles/github-dark.css";
 
@@ -14,7 +15,8 @@ type Msg = {
   role: "user" | "assistant";
   content: string;
   status?: string;
-  chart?: { type: "line" | "bar"; data: any[]; xKey: string; yKey: string; title: string };
+  chart?: { type: "line" | "bar"; data: Array<Record<string, unknown>>; xKey: string; yKey: string; title: string };
+  envelope?: TitanEnvelope | null;
 };
 
 type ChatSession = {
@@ -46,7 +48,7 @@ function newId() {
 const initialAssistantMsg: Msg = {
   role: "assistant",
   content:
-    "I'm **TITAN CFO** — your ruthless financial intelligence. I speak only in hard numbers and actionable directives.\n\n**No generic advice. Only operational commands.**",
+    "I’m **TITAN** — your business partner. Give me a goal or a question and I’ll translate your data into decisions, visuals, and next actions.",
 };
 
 const ceoCommands = [
@@ -340,6 +342,19 @@ export default function ChatClientEnhanced() {
     });
   }
 
+  function setLastAssistantEnvelope(envelope: TitanEnvelope) {
+    upsertSession((s) => {
+      const next = [...s.messages];
+      for (let i = next.length - 1; i >= 0; i--) {
+        if (next[i]?.role === "assistant") {
+          next[i] = { ...next[i], envelope, content: next[i]?.content ?? "" };
+          return { ...s, updatedAt: now(), messages: next };
+        }
+      }
+      return { ...s, updatedAt: now(), messages: [...next, { role: "assistant", content: "", envelope }] };
+    });
+  }
+
   async function send(prompt?: string) {
     const text = (prompt ?? input).trim();
     if (!text || loading) return;
@@ -415,6 +430,16 @@ export default function ChatClientEnhanced() {
             try {
               const parsed = JSON.parse(payload);
               upsertSession((s) => ({ ...s, updatedAt: now(), sources: parsed }));
+            } catch {
+              // ignore
+            }
+            sepIdx = buf.indexOf("\n\n");
+            continue;
+          }
+          if (eventType === "response_json") {
+            try {
+              const parsed = JSON.parse(payload) as TitanEnvelope;
+              setLastAssistantEnvelope(parsed);
             } catch {
               // ignore
             }
@@ -503,9 +528,9 @@ export default function ChatClientEnhanced() {
       <section className="min-w-0 overflow-hidden rounded-2xl border border-white/5 bg-[radial-gradient(circle_at_20%_20%,rgba(52,211,153,0.08),transparent_35%),_rgba(10,10,12,0.9)] shadow-2xl shadow-emerald-500/10 backdrop-blur-xl">
         <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-white/5 bg-black/40 px-4 py-3 backdrop-blur-sm lg:px-6">
           <div>
-            <div className="text-[11px] uppercase tracking-[0.26em] text-emerald-200">Titan / CFO Command Center</div>
-            <div className="text-lg font-semibold text-white">Enterprise Intelligence • 45s Timeout</div>
-            <div className="text-xs text-zinc-400">Only hard numbers. Only actionable directives.</div>
+            <div className="text-[11px] uppercase tracking-[0.26em] text-emerald-200">TITAN Partner</div>
+            <div className="text-lg font-semibold text-white">Decision Intelligence • 45s Timeout</div>
+            <div className="text-xs text-zinc-400">Data-backed answers, visuals, and next actions.</div>
           </div>
           <div className="flex items-center gap-2">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[12px] text-zinc-200">
@@ -535,14 +560,33 @@ export default function ChatClientEnhanced() {
                     }
                   >
                     <div className="mb-1 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-emerald-200/80">
-                      {m.role === "user" ? "CEO" : "Titan CFO"}
+                      {m.role === "user" ? "CEO" : "TITAN"}
                       <span className="h-px w-6 bg-emerald-300/30" />
                     </div>
                     {m.role === "assistant" ? (
-                      <AIResponseFormatter 
-                        content={m.content || ""} 
-                        onTaskAssign={(task) => handleTaskAssign(task)}
-                      />
+                      m.envelope ? (
+                        <VisualResponse
+                          content={m.content || ""}
+                          envelope={m.envelope}
+                          onTaskAssign={(task: TitanSuggestedTask) =>
+                            handleTaskAssign({
+                              id: `task_${Date.now()}`,
+                              title: task.title,
+                              priority:
+                                String(task.priority || "Medium").toLowerCase() === "high"
+                                  ? "high"
+                                  : String(task.priority || "Medium").toLowerCase() === "low"
+                                    ? "low"
+                                    : "medium",
+                            })
+                          }
+                        />
+                      ) : (
+                        <AIResponseFormatter
+                          content={m.content || ""}
+                          onTaskAssign={(task) => handleTaskAssign(task)}
+                        />
+                      )
                     ) : (
                       <SmartMarkdown content={m.content || ""} />
                     )}
@@ -592,7 +636,7 @@ export default function ChatClientEnhanced() {
                     void send();
                   }
                 }}
-                placeholder="Issue directive... e.g., 'Maida wastage root cause and action plan'"
+                placeholder='Ask TITAN… e.g., "Why is profit down this week?"'
                 className="min-w-0 flex-1 bg-transparent text-sm text-zinc-50 placeholder:text-zinc-500 outline-none"
               />
             </div>
@@ -608,7 +652,7 @@ export default function ChatClientEnhanced() {
           </div>
 
           <div className="mt-2 flex items-center justify-between text-[10px] text-zinc-500">
-            <span>Titan CFO: No fluff. Pure intelligence. 45-second deep analysis.</span>
+            <span>TITAN Partner • Data-first • Visual answers • 45-second deep analysis.</span>
           </div>
         </div>
       </section>

@@ -10,13 +10,152 @@ from pydantic import BaseModel
 import json
 
 from pillars.config_vault import EffectiveSettings
-from utils.gemini_chat import chat_with_gemini_stream, get_conversation_history
+from utils.gemini_chat import get_conversation_history
 from utils.bq_guardrails import QueryMetaCollector
 from pillars.chat_intel import parse_time_window
 from utils.auto_task_extractor import extract_tasks_from_response, insert_tasks_to_bigquery
-from backend.core.data_intelligence import get_smart_data_context
+from backend.core.data_intelligence import DataIntelligence
 
 router = APIRouter(prefix="/api/v1/chat", tags=["chat"])
+
+
+def _extract_json_object(text: str) -> Optional[Dict[str, Any]]:
+    if not text:
+        return None
+    raw = str(text).strip()
+    if raw.startswith("```"):
+        fence_start = raw.find("\n")
+        fence_end = raw.rfind("```")
+        if fence_start != -1 and fence_end != -1 and fence_end > fence_start:
+            raw = raw[fence_start:fence_end].strip()
+    start = raw.find("{")
+    end = raw.rfind("}")
+    if start == -1 or end == -1 or end <= start:
+        return None
+    candidate = raw[start : end + 1]
+    try:
+        obj = json.loads(candidate)
+        return obj if isinstance(obj, dict) else None
+    except Exception:
+        return None
+
+
+def _tasks_from_suggested_tasks(suggested_tasks: Any) -> List[Dict[str, Any]]:
+    if not isinstance(suggested_tasks, list):
+        return []
+
+    out: List[Dict[str, Any]] = []
+    for t in suggested_tasks:
+        if not isinstance(t, dict):
+            continue
+        title = t.get("title")
+        if not isinstance(title, str) or not title.strip():
+            continue
+        priority = t.get("priority")
+        assignee = t.get("assignee")
+        deadline = t.get("deadline")
+        out.append(
+            {
+                "description": title[:500],
+                "item_involved": "General",
+                "priority": str(priority or "Medium"),
+                "department": str(assignee or "Operations")[:120],
+                "deadline": str(deadline) if deadline else None,
+                "task_type": "AI_Generated_Action",
+                "status": "Pending",
+            }
+        )
+    return out
+
+
+def _ensure_envelope(obj: Optional[Dict[str, Any]], fallback_message: str, visual_widget: Optional[Dict[str, Any]] = None, suggested_tasks: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+    if not isinstance(obj, dict):
+        obj = {}
+    message = obj.get("message")
+    if not isinstance(message, str) or not message.strip():
+        obj["message"] = fallback_message
+    if "thought_process" not in obj or not isinstance(obj.get("thought_process"), str):
+        obj["thought_process"] = "Internal reasoning withheld."
+    if "visual_widget" not in obj:
+        obj["visual_widget"] = visual_widget
+    if "suggested_tasks" not in obj:
+        obj["suggested_tasks"] = suggested_tasks or []
+    if "next_questions" not in obj:
+        obj["next_questions"] = []
+    return obj
+
+
+def _visual_widget_from_visual_data(visual_data: Any) -> Optional[Dict[str, Any]]:
+    if not isinstance(visual_data, dict):
+        return None
+
+    chart_type = visual_data.get("chart_type")
+    chart_data = visual_data.get("chart_data")
+    if isinstance(chart_type, str) and chart_type in ("bar", "line", "pie") and isinstance(chart_data, list):
+        return {
+            "type": chart_type,
+            "title": "Key Metrics",
+            "data": chart_data,
+        }
+
+    kpi_cards = visual_data.get("kpi_cards")
+    if isinstance(kpi_cards, list) and kpi_cards:
+        return {
+            "type": "kpi_card",
+            "title": "KPIs",
+            "data": kpi_cards,
+        }
+
+    return None
+
+
+def _build_partner_prompt(user_message: str, data_summary: str, data_payload: Dict[str, Any], conversation_history: Optional[List[Dict[str, Any]]] = None) -> str:
+    history_text = ""
+    if conversation_history:
+        for conv in conversation_history[-5:]:
+            user_msg = conv.get("user_message", "")
+            ai_msg = conv.get("ai_response", "")
+            if user_msg and ai_msg:
+                history_text += f"User: {user_msg}\nAssistant: {ai_msg}\n\n"
+
+    system_hint = data_payload.get("system_hint") if isinstance(data_payload, dict) else None
+    visual_data = data_payload.get("visual_data") if isinstance(data_payload, dict) else None
+    has_zero = bool(data_payload.get("has_zero_data")) if isinstance(data_payload, dict) else False
+
+    hint_block = f"\n{system_hint}\n" if system_hint else ""
+    visual_block = ""
+    try:
+        if visual_data is not None:
+            visual_block = "\nVISUAL_DATA_JSON:\n" + json.dumps(visual_data, ensure_ascii=False)
+    except Exception:
+        visual_block = ""
+
+    zero_rule = "If the data shows 0 sales/revenue/profit, assume a POS sync/data pipeline issue. Ask a quick diagnostic question and suggest technical checks (do NOT scold or give business strategy)." if has_zero else ""
+
+    return f"""You are TITAN — a high-IQ Strategic Business Partner for Cafe Mellow.
+
+TONE: Conversational, confident, professional, fluid (like a senior McKinsey consultant).
+RULES:
+- Do NOT use robotic headings like 'Finding:', 'Root Cause:', 'Action:' unless the user explicitly requests a formal report.
+- {zero_rule}
+
+YOU MUST OUTPUT VALID JSON ONLY (no markdown fences, no extra text) with these keys:
+{{
+  \"thought_process\": \"Internal reasoning withheld.\",
+  \"message\": \"markdown text for the user\",
+  \"visual_widget\": {{ \"type\": \"bar\", \"title\": \"...\", \"data\": [{{\"name\":\"Revenue\",\"value\":123}}] }} OR null,
+  \"suggested_tasks\": [{{\"title\":\"...\",\"assignee\":\"IT\",\"priority\":\"High\",\"deadline\":\"2026-01-29\"}}] OR [],
+  \"next_questions\": [\"...\"] OR []
+}}
+
+Allowed visual_widget.type values: bar, line, pie, kpi_card.
+
+BUSINESS DATA (authoritative):
+{data_summary}
+{hint_block}
+{visual_block}
+
+{history_text}User: {user_message}"""
 
 
 class ChatRequest(BaseModel):
@@ -109,34 +248,79 @@ def chat_stream(req: ChatRequest):
             # Accumulate full response for auto-task extraction
             full_ai_response = ""
             
-            # TITAN Data Intelligence: Fetch ACTUAL data based on user intent
             data_context = None
+            data_payload: Dict[str, Any] = {"has_zero_data": False, "visual_data": None, "system_hint": None}
             if req.enable_sql:
                 try:
-                    data_context = get_smart_data_context(client, cfg, msg)
+                    di = DataIntelligence(client, cfg)
+                    intent, period = di.detect_intent(msg)
+                    ctx = di.get_context(intent, period)
+                    data_context = ctx.summary
+                    data_payload = {
+                        "intent": intent.value,
+                        "time_period": ctx.time_period,
+                        "has_zero_data": bool(ctx.has_zero_data),
+                        "system_hint": ctx.system_hint,
+                        "visual_data": ctx.visual_data,
+                        "raw_numbers": ctx.raw_numbers,
+                    }
                 except Exception as e:
-                    print(f"Data Intelligence error: {e}")
                     data_context = None
+                    data_payload = {
+                        "has_zero_data": False,
+                        "system_hint": f"[SYSTEM_NOTE: Data intelligence failed: {str(e)}]",
+                        "visual_data": None,
+                    }
             
             # Vision context if image provided
             vision_context = None
             if req.enable_vision and req.image_base64:
                 vision_context = f"[Image analysis enabled. Base64 length: {len(req.image_base64)}]"
             
-            # Build enhanced context for AI with ACTUAL DATA
-            enhanced_msg = msg
-            if data_context:
-                enhanced_msg = f"{msg}\n\n{data_context}"
-            if vision_context:
-                enhanced_msg = f"{enhanced_msg}\n\n{vision_context}"
+            prompt = _build_partner_prompt(
+                user_message=msg,
+                data_summary=(data_context or "(No business data loaded.)"),
+                data_payload=data_payload,
+                conversation_history=conversation_history,
+            )
             
+            from utils.gemini_chat import chat_with_gemini
+
             with QueryMetaCollector() as qc:
-                for chunk in chat_with_gemini_stream(client, cfg, enhanced_msg, conversation_history=conversation_history):
+                raw = chat_with_gemini(
+                    client,
+                    cfg,
+                    prompt,
+                    conversation_history=conversation_history,
+                    use_enhanced_prompt=True,
+                    original_user_prompt=msg,
+                    use_v3=False,
+                )
+
+                full_ai_response = str(raw or "")
+                parsed = _extract_json_object(full_ai_response)
+
+                default_visual = _visual_widget_from_visual_data(data_payload.get("visual_data"))
+                envelope = _ensure_envelope(
+                    parsed,
+                    fallback_message=full_ai_response or "My brain is fuzzy right now, but I can still help. What period do you want to analyze?",
+                    visual_widget=default_visual,
+                    suggested_tasks=[],
+                )
+
+                # Stream the conversational message (human-readable)
+                stream_text = str(envelope.get("message") or "")
+                if stream_text:
                     streamed_any = True
-                    full_ai_response += str(chunk)
-                    safe = str(chunk).replace("\r", "").replace("\n", "\\n")
-                    if safe:
-                        yield f"data:{safe}\n\n"
+                    safe = stream_text.replace("\r", "").replace("\n", "\\n")
+                    yield f"data:{safe}\n\n"
+
+                # Provide the full JSON envelope for the frontend to render charts/tasks
+                try:
+                    envelope_json = json.dumps(envelope, ensure_ascii=False).replace("\r", "").replace("\n", "")
+                    yield f"event: response_json\ndata:{envelope_json}\n\n"
+                except Exception:
+                    pass
             
             # Query metadata for cost tracking
             items = list(getattr(qc, "items", []) or [])
@@ -145,7 +329,7 @@ def chat_stream(req: ChatRequest):
                 "time_window": tw_label or "",
                 "queries": items,
                 "total_cost_inr": total_inr,
-                "sql_executed": bool(sql_context),
+                "sql_executed": bool(data_context),
             }
             sources_json = json.dumps(sources_payload, ensure_ascii=False).replace("\r", "").replace("\n", "")
             yield f"event: sources\ndata:{sources_json}\n\n"
@@ -158,32 +342,45 @@ def chat_stream(req: ChatRequest):
             if req.org_id and req.location_id:
                 _auto_learn_pattern(msg, client, cfg, req.org_id, req.location_id)
             
-            # AUTO-TASKING: Extract tasks from AI response and insert to operations queue
             if req.org_id and req.location_id and full_ai_response:
                 try:
-                    tasks = extract_tasks_from_response(full_ai_response)
+                    tasks = _tasks_from_suggested_tasks(envelope.get("suggested_tasks"))
+                    if not tasks:
+                        tasks = extract_tasks_from_response(full_ai_response)
                     if tasks:
                         inserted = insert_tasks_to_bigquery(
-                            client, cfg, tasks, 
-                            org_id=req.org_id, 
-                            location_id=req.location_id
+                            client, cfg, tasks,
+                            org_id=req.org_id,
+                            location_id=req.location_id,
                         )
                         if inserted > 0:
-                            # Notify via SSE
                             task_notification = json.dumps({"tasks_created": inserted}, ensure_ascii=False)
                             yield f"event: tasks\ndata:{task_notification}\n\n"
                 except Exception as e:
-                    # Don't fail the chat if task extraction fails
                     print(f"Auto-task extraction error: {e}")
             
             yield "event: done\ndata: {}\n\n"
         except Exception as e:
-            err = str(e).replace("\r", "").replace("\n", "\\n")
-            yield f"event: error\ndata:{err}\n\n"
+            fallback = {
+                "thought_process": "Internal reasoning withheld.",
+                "message": f"My brain is fuzzy, but here is what I know: {str(e)}",
+                "visual_widget": None,
+                "suggested_tasks": [],
+                "next_questions": [],
+            }
+            try:
+                fallback_json = json.dumps(fallback, ensure_ascii=False).replace("\r", "").replace("\n", "")
+                yield f"event: response_json\ndata:{fallback_json}\n\n"
+                safe = str(fallback.get("message") or "").replace("\r", "").replace("\n", "\\n")
+                if safe:
+                    yield f"data:{safe}\n\n"
+            except Exception:
+                pass
+            yield "event: done\ndata: {}\n\n"
     
     return StreamingResponse(
         _sse(),
-        media_type="text/event-stream",
+        media_type="text/event-stream; charset=utf-8",
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
@@ -198,31 +395,65 @@ def chat_non_streaming(req: ChatRequest) -> Dict[str, Any]:
     Non-streaming chat endpoint (legacy support)
     """
     cfg, client, msg = _validate_chat_request(req)
-    
+
     try:
         from utils.gemini_chat import chat_with_gemini
-        
-        # Fetch ACTUAL data based on user intent
+
         data_context = None
+        data_payload: Dict[str, Any] = {"has_zero_data": False, "visual_data": None, "system_hint": None}
         if req.enable_sql:
             try:
-                data_context = get_smart_data_context(client, cfg, msg)
-            except Exception:
-                pass
-        
-        # Build enhanced message with actual data
-        enhanced_msg = msg
-        if data_context:
-            enhanced_msg = f"{msg}\n\n{data_context}"
-        
+                di = DataIntelligence(client, cfg)
+                intent, period = di.detect_intent(msg)
+                ctx = di.get_context(intent, period)
+                data_context = ctx.summary
+                data_payload = {
+                    "intent": intent.value,
+                    "time_period": ctx.time_period,
+                    "has_zero_data": bool(ctx.has_zero_data),
+                    "system_hint": ctx.system_hint,
+                    "visual_data": ctx.visual_data,
+                    "raw_numbers": ctx.raw_numbers,
+                }
+            except Exception as e:
+                data_context = None
+                data_payload = {
+                    "has_zero_data": False,
+                    "system_hint": f"[SYSTEM_NOTE: Data intelligence failed: {str(e)}]",
+                    "visual_data": None,
+                }
+
         conversation_history = get_conversation_history(client, cfg, limit=10)
-        response = chat_with_gemini(client, cfg, enhanced_msg, conversation_history=conversation_history)
-        
-        return {"ok": True, "answer": response}
-    except HTTPException:
-        raise
+        prompt = _build_partner_prompt(
+            user_message=msg,
+            data_summary=(data_context or "(No business data loaded.)"),
+            data_payload=data_payload,
+            conversation_history=conversation_history,
+        )
+
+        raw = chat_with_gemini(
+            client,
+            cfg,
+            prompt,
+            conversation_history=conversation_history,
+            use_enhanced_prompt=True,
+            original_user_prompt=msg,
+            use_v3=False,
+        )
+
+        parsed = _extract_json_object(str(raw or ""))
+        default_visual = _visual_widget_from_visual_data(data_payload.get("visual_data"))
+        envelope = _ensure_envelope(parsed, fallback_message=str(raw or ""), visual_widget=default_visual)
+        return {"ok": True, "answer": json.dumps(envelope, ensure_ascii=False)}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        fallback = {
+            "thought_process": "Internal reasoning withheld.",
+            "message": f"My brain is fuzzy, but here is what I know: {str(e)}",
+            "visual_widget": None,
+            "suggested_tasks": [],
+            "next_questions": [],
+        }
+        return {"ok": False, "answer": json.dumps(fallback, ensure_ascii=False)}
 
 
 @router.post("/metacognitive/learn")

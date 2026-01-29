@@ -37,6 +37,9 @@ class DataContext:
     data: Dict[str, Any]
     summary: str
     raw_numbers: Dict[str, float]
+    has_zero_data: bool = False
+    system_hint: Optional[str] = None
+    visual_data: Optional[Dict[str, Any]] = None
 
 
 class DataIntelligence:
@@ -197,7 +200,23 @@ class DataIntelligence:
         avg_daily_revenue = revenue / max(days, 1)
         avg_order_value = revenue / max(orders, 1)
         
-        summary = f"""## {label} FINANCIAL DATA (ACTUAL NUMBERS)
+        # Detect zero data scenario
+        has_zero_data = revenue == 0 and orders == 0
+        system_hint = None
+        
+        if has_zero_data:
+            system_hint = "[SYSTEM_NOTE: Zero revenue detected. This indicates a POS sync issue or data pipeline failure. Guide user to check technical systems, not business strategy.]"
+            summary = f"""## {label} FINANCIAL DATA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ **DATA SYNC ALERT**
+**REVENUE:** ₹0.00 (No sales data found)
+**EXPENSES:** ₹{expenses:,.2f}
+**Orders:** 0
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 **Likely Issue:** POS system not syncing or data pipeline offline
+"""
+        else:
+            summary = f"""## {label} FINANCIAL DATA
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 **REVENUE:** ₹{revenue:,.2f}
 **EXPENSES:** ₹{expenses:,.2f}
@@ -209,6 +228,22 @@ class DataIntelligence:
 **Avg Daily Revenue:** ₹{avg_daily_revenue:,.2f}
 **Expense Items:** {expense_count}
 """
+        
+        # Prepare visual data for charts
+        visual_data = {
+            "kpi_cards": [
+                {"label": "Revenue", "value": revenue, "format": "currency"},
+                {"label": "Expenses", "value": expenses, "format": "currency"},
+                {"label": "Net Profit", "value": profit, "format": "currency"},
+                {"label": "Margin", "value": margin, "format": "percentage"}
+            ],
+            "chart_type": "bar",
+            "chart_data": [
+                {"name": "Revenue", "value": revenue, "color": "#10b981"},
+                {"name": "Expenses", "value": expenses, "color": "#ef4444"},
+                {"name": "Profit", "value": profit, "color": "#3b82f6"}
+            ]
+        }
         
         return DataContext(
             intent=QueryIntent.PROFIT,
@@ -223,7 +258,10 @@ class DataIntelligence:
                 "days": days
             },
             summary=summary,
-            raw_numbers={"revenue": revenue, "expenses": expenses, "profit": profit, "margin": margin}
+            raw_numbers={"revenue": revenue, "expenses": expenses, "profit": profit, "margin": margin},
+            has_zero_data=has_zero_data,
+            system_hint=system_hint,
+            visual_data=visual_data
         )
     
     def fetch_expense_breakdown(self, time_period: str) -> DataContext:
@@ -471,27 +509,28 @@ class DataIntelligence:
     def get_data_context(self, message: str) -> DataContext:
         """Main entry point - detect intent and fetch relevant data"""
         intent, time_period = self.detect_intent(message)
-        
-        # Route to appropriate fetch method
+
+        return self.get_context(intent, time_period)
+
+    def get_context(self, intent: QueryIntent, time_period: str) -> DataContext:
         if intent == QueryIntent.PROFIT or intent == QueryIntent.UNKNOWN:
             return self.fetch_profit_data(time_period)
-        elif intent == QueryIntent.REVENUE:
-            return self.fetch_profit_data(time_period)  # Same data, AI focuses on revenue
-        elif intent == QueryIntent.EXPENSES:
+        if intent == QueryIntent.REVENUE:
+            return self.fetch_profit_data(time_period)
+        if intent == QueryIntent.EXPENSES:
             return self.fetch_expense_breakdown(time_period)
-        elif intent == QueryIntent.TOP_ITEMS:
+        if intent == QueryIntent.TOP_ITEMS:
             return self.fetch_top_items(time_period)
-        elif intent == QueryIntent.PROFIT_LEAKS:
+        if intent == QueryIntent.PROFIT_LEAKS:
             return self.fetch_profit_leaks(time_period)
-        elif intent == QueryIntent.TRENDS or intent == QueryIntent.COMPARISON:
+        if intent == QueryIntent.TRENDS or intent == QueryIntent.COMPARISON:
             return self.fetch_trends(time_period)
-        elif intent == QueryIntent.STAFF:
-            # Staff data not available, return profit with note
+        if intent == QueryIntent.STAFF:
             ctx = self.fetch_profit_data(time_period)
             ctx.summary += "\n⚠️ **Staff performance data not available.** Need POS integration to track individual staff sales."
             return ctx
-        else:
-            return self.fetch_profit_data(time_period)
+
+        return self.fetch_profit_data(time_period)
 
 
 def get_smart_data_context(client, settings, message: str) -> str:
@@ -505,3 +544,28 @@ def get_smart_data_context(client, settings, message: str) -> str:
         return ctx.summary
     except Exception as e:
         return f"⚠️ Data fetch error: {str(e)}. Proceeding with limited context."
+
+
+def get_smart_data_payload(client, settings, message: str) -> Dict[str, Any]:
+    try:
+        di = DataIntelligence(client, settings)
+        ctx = di.get_data_context(message)
+        return {
+            "ok": True,
+            "intent": ctx.intent.value,
+            "time_period": ctx.time_period,
+            "summary": ctx.summary,
+            "has_zero_data": bool(ctx.has_zero_data),
+            "system_hint": ctx.system_hint,
+            "visual_data": ctx.visual_data,
+            "raw_numbers": ctx.raw_numbers,
+        }
+    except Exception as e:
+        return {
+            "ok": False,
+            "error": str(e),
+            "summary": f"⚠️ Data fetch error: {str(e)}. Proceeding with limited context.",
+            "has_zero_data": False,
+            "system_hint": None,
+            "visual_data": None,
+        }

@@ -20,6 +20,7 @@ import json
 import time
 
 from google.cloud import bigquery
+from google.auth.exceptions import DefaultCredentialsError
 
 try:
     import google.generativeai as genai
@@ -31,6 +32,20 @@ from .graph_rag import GraphRAG
 from .phoenix_protocols import PhoenixProtocols, HealingStatus
 from .active_senses import ActiveSenses
 from .evolution_core import EvolutionCore, LearningType
+
+
+def _get_bq_client(project_id: str) -> Tuple[Optional[bigquery.Client], Optional[Exception]]:
+    try:
+        key_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "..", "service-key.json")
+        )
+        if os.path.exists(key_path):
+            return bigquery.Client.from_service_account_json(key_path), None
+        return bigquery.Client(project=project_id), None
+    except DefaultCredentialsError as e:
+        return None, e
+    except Exception as e:
+        return None, e
 
 
 @dataclass
@@ -95,7 +110,7 @@ class TitanV3Engine:
             self.flash_model = None
             self.pro_model = None
         
-        self.bq_client = bigquery.Client(project=self.PROJECT_ID)
+        self.bq_client, self._bq_init_error = _get_bq_client(self.PROJECT_ID)
     
     async def process_query(
         self,

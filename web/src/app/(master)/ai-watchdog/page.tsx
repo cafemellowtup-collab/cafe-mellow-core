@@ -24,7 +24,7 @@ interface Insight {
   title: string;
   description: string;
   recommendation: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   created_at: string;
   acknowledged: boolean;
 }
