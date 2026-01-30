@@ -14,7 +14,6 @@ from utils.gemini_chat import get_conversation_history
 from utils.bq_guardrails import QueryMetaCollector
 from pillars.chat_intel import parse_time_window
 from utils.auto_task_extractor import extract_tasks_from_response, insert_tasks_to_bigquery
-from backend.core.data_intelligence import DataIntelligence
 
 router = APIRouter(prefix="/api/v1/chat", tags=["chat"])
 
@@ -251,26 +250,9 @@ def chat_stream(req: ChatRequest):
             data_context = None
             data_payload: Dict[str, Any] = {"has_zero_data": False, "visual_data": None, "system_hint": None}
             if req.enable_sql:
-                try:
-                    di = DataIntelligence(client, cfg)
-                    intent, period = di.detect_intent(msg)
-                    ctx = di.get_context(intent, period)
-                    data_context = ctx.summary
-                    data_payload = {
-                        "intent": intent.value,
-                        "time_period": ctx.time_period,
-                        "has_zero_data": bool(ctx.has_zero_data),
-                        "system_hint": ctx.system_hint,
-                        "visual_data": ctx.visual_data,
-                        "raw_numbers": ctx.raw_numbers,
-                    }
-                except Exception as e:
-                    data_context = None
-                    data_payload = {
-                        "has_zero_data": False,
-                        "system_hint": f"[SYSTEM_NOTE: Data intelligence failed: {str(e)}]",
-                        "visual_data": None,
-                    }
+                data_payload["system_hint"] = (
+                    "[SYSTEM_NOTE: Data intelligence module is disabled after cleanup; respond without SQL context.]"
+                )
             
             # Vision context if image provided
             vision_context = None

@@ -24,6 +24,23 @@ except Exception as e:
     _bq_init_error = e
 
 
+class InsightType(str, Enum):
+    USAGE_ANOMALY = "usage_anomaly"
+    CHURN_RISK = "churn_risk"
+    GROWTH_OPPORTUNITY = "growth_opportunity"
+    COST_ALERT = "cost_alert"
+    FEATURE_SUGGESTION = "feature_suggestion"
+    ENGAGEMENT_DROP = "engagement_drop"
+    HIGH_PERFORMER = "high_performer"
+
+
+class InsightPriority(str, Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    URGENT = "urgent"
+
+
 @dataclass
 class AIInsight:
     """AI-generated insight about a tenant or system"""
@@ -174,37 +191,6 @@ class AIWatchdog:
         return insights
 
 
-class InsightType(str, Enum):
-    USAGE_ANOMALY = "usage_anomaly"
-    CHURN_RISK = "churn_risk"
-    GROWTH_OPPORTUNITY = "growth_opportunity"
-    COST_ALERT = "cost_alert"
-    FEATURE_SUGGESTION = "feature_suggestion"
-    ENGAGEMENT_DROP = "engagement_drop"
-    HIGH_PERFORMER = "high_performer"
-
-
-class InsightPriority(str, Enum):
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-    URGENT = "urgent"
-
-
-@dataclass
-class AIInsight:
-    """AI-generated insight about a tenant or system"""
-    insight_id: str
-    insight_type: InsightType
-    priority: InsightPriority
-    tenant_id: Optional[str]
-    title: str
-    description: str
-    recommendation: str
-    data: Dict[str, Any]
-    created_at: datetime
-    acknowledged: bool = False
-    acknowledged_by: Optional[str] = None
 
 
 @dataclass

@@ -13,7 +13,7 @@ from utils.ops_brief import generate_and_store as _generate_and_store_brief
 from utils.ops_brief import get_latest_brief as _get_latest_brief
 from utils.ai_task_queue import generate_and_write_ops_tasks as _generate_and_write_ops_tasks
 
-from api.routers import cron, ledger, analytics, hr, ceo_brief, upload, chat, sync, oracle, forecast, users, notifications, auth, universal_adapter, semantic_brain, master, reports, intelligence, titan_v3, titan_core
+from api.routers import cron, ledger, analytics, hr, ceo_brief, upload, chat, sync, oracle, forecast, users, notifications, auth, universal_adapter, semantic_brain, master, reports, titan_v3
 try:
     from api.routers import ingester  # type: ignore
 except Exception:
@@ -153,9 +153,7 @@ app.include_router(airlock_router)
 app.include_router(semantic_brain.router)
 app.include_router(master.router)
 app.include_router(reports.router)
-app.include_router(intelligence.router)
 app.include_router(titan_v3.router)
-app.include_router(titan_core.router)
 
 app.add_middleware(
     CORSMiddleware,
