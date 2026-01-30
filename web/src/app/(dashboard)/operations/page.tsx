@@ -1,4 +1,4 @@
-import OperationsClient from "../../operations/OperationsClient";
+import OperationsClient from "./OperationsClient";
 
 export default function OperationsPage() {
   return (
