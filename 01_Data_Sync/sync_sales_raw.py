@@ -15,9 +15,11 @@ import hashlib
 from datetime import datetime, timedelta
 import time
 
+# Centralized config - NO HARDCODED PROJECT IDs
+from pillars.config_vault import get_bq_config
+
+PROJECT_ID, DATASET_ID = get_bq_config()
 KEY_FILE = "service-key.json"
-PROJECT_ID = "cafe-mellow-core-2026"
-DATASET_ID = "cafe_operations"
 RAW_TABLE = "sales_raw_layer"
 STATE_FILE = "sales_sync_state.json"
 

@@ -1,0 +1,433 @@
+Name,Recipe Costing Report,,
+Restaurant Name,Cafe Mellow,,
+Restaurant Address,"40/1/40A, Odakkadu, Indhira Nagar, 2nd Street, Rayapuram, Tiruppur",,
+Calculate from,Current average purchase price,,
+,,,
+Menu Name,Recipe Costing (₹),Selling Price (₹),Margin (%)
+Signature Cold Coffee,65.657,199,67.007
+Assorted Cup Cakes 5+1,30.404,150,79.731
+Spiced Chai Fantasy,50.498,185,72.704
+Garlic Potato Bites,21.749,139,84.353
+Tiramisu Cake [ 500 Gm ],247.302,800,69.087
+Tiramisu Cake [ 1 Kg ],497.178,1600,68.926
+Double Chocolate Pastry,36.079,125,71.136
+Paper Popper,0,120,100
+Birthday Cap,0,0,0
+Snow Spray,0,50,100
+Number Candle,14,25,44
+Mushroom Burger,36.114,179,79.824
+Hazelnut Brownie,15.12,95,84.084
+Filter Coffee Indulgence [ 1 Kg ],217.621,1740,87.493
+Filter Coffee Indulgence [ 500 Gm ],98.477,870,88.681
+Classic Mac & Cheese,68.619,275,75.048
+Fresh Blueberry [ 1 Kg ],488.911,1760,72.221
+Fresh Blueberry [ 500 Gm ],231.168,880,73.731
+Hazelnut Chocolate Cake [ customized cake ],208.682,0,0
+Hazelnut Chocolate Cake [ 1 Kg ],208.682,1200,82.61
+Hazelnut Chocolate Cake [ 500 Gm ],104.308,600,82.615
+Biscoff Modak,39.102,89,56.065
+Redvelvet Swiss Roll,45.447,165,72.456
+Tiramisu Pastry,34.409,170,79.76
+La Opera Pastry,49.361,189,73.883
+Paneer Frankie,37.047,145,74.45
+Well Cake,50.105,155,67.674
+Swiss Roll,44.846,139,67.737
+Sky Lantern,150,200,25
+Biscoff Pastry,47.233,160,70.48
+Paneer Schezwan Cheese Pav,41.236,99,58.347
+Paneer Cheese Pav,40.987,85,51.78
+Chilli Paneer Roll,34.121,120,71.566
+Paneer Cheese Roll,51.192,180,71.56
+Veg Roll,28.831,70,58.813
+Korean Cheese Garlic Bun,32.162,195,83.507
+Fridge Magnet-Small,0,120,100
+Resin Art Candle Stand,289.583,0,0
+Aloo Tikki Chat,38.314,85,54.924
+Crispy Paneer Chat,49.939,169,70.45
+Dahi Aloo Tikki Chat,40.923,99,58.664
+Hazelnut Almond Cake [ customized cake ],317.684,0,0
+Hazelnut Almond Cake [ 1kg ],340.722,1240,72.522
+Hazelnut Almond Cake [ 500 Gm ],172.441,620,72.187
+Ferrero Rocher Moments [ 16 Pcs ],228.74,299,23.498
+Ferrero Rocher Moments [ 8 Pcs ],149.165,199,25.043
+Ferrero Rocher [ 24 Pcs ],668.515,950,29.63
+Ferrero Rocher [ 16 Pcs ],414.472,589,29.631
+Ferrero Rocher [ 8 Pcs ],235.912,349,32.403
+Ferrero Rocher [ 4 Pcs ],134.554,169,20.382
+Water Bottle,12.904,30,56.988
+Belgium Chocolate Pastry,35.658,195,81.714
+Mexican Cheesy Nachoos,70.914,189,62.479
+Veggie Nuggets,40.48,149,72.833
+Black Coffee,3.617,25,85.533
+Filter Coffee,9.421,30,68.595
+Chatpat Mayo Vada Pav[VWP],16.285,83,80.38
+Sabudana Mayo Vada Pav[VWP],9.648,89,89.159
+Paneer Mayo Vada Pav[VWP],33.791,95,64.431
+Spinach Corn Mayo Vada Pav[VWP],9.648,88,89.036
+Mixed Veg Mayo Vada Pav[VWP],15.907,83,80.835
+Classic Mayo Vada Pav[VWP],14.763,78,81.073
+Sabudana Schezwan Vada Pav[VWP],6.744,89,92.423
+Spinach Corn Schezwan Vada Pav[VWP],6.744,88,92.337
+Peri Peri Paneer Vada Pav[VWP],35.986,90,60.016
+Tandoori Paneer Vada Pav[VWP],36.238,90,59.735
+Chatpat Vada Pav[VWP],15.112,73,79.299
+Sabudana Vada Pav[VWP],6.744,83,91.875
+Paneer Vada Pav[VWP],32.617,85,61.627
+Spinach Corn Vada Pav[VWP],6.744,78,91.354
+Mixed Veg Vada Pav[VWP],14.733,73,79.817
+Tandoori Vada Pav[VWP],17.211,73,76.423
+Peri Peri Vada Pav[VWP],16.959,73,76.769
+Classic Vada Pav[VWP],13.59,68,80.015
+Paneer Schezwan Pav,32.867,89,63.071
+Paneer Pav,32.617,79,58.713
+Schezwan Vada Pav,13.839,79,82.482
+Classic Vada Pav,13.59,65,79.093
+Chatpat Cheese Vada Pav[VWP],23.481,83,71.71
+Sabudana Cheese Vada Pav[VWP],15.113,93,83.749
+Paneer Cheese Vada Pav[VWP],40.987,99,58.599
+Tandoori Cheese Vada Pav[VWP],25.58,83,69.18
+Peri Peri Cheese Vada Pav[VWP],25.328,83,69.484
+Spinach Corn Cheese Vada Pav[VWP],15.113,88,82.826
+Mixed Veg Cheese Vada Pav[VWP],23.103,83,72.165
+Classic Cheese Vada Pav[VWP],21.959,78,71.847
+Paneer Schezwan Vada Pav[VWP],34.676,95,63.499
+Chatpat Schezwan Vada Pav[VWP],17.171,83,79.312
+Mixed Veg Schezwan Vada Pav[VWP],16.793,83,79.768
+Classic Schezwan Vada Pav[VWP],15.649,78,79.937
+Blueberry Cup Cake [ large ],7.68,60,87.199
+Blueberry Cup Cake [ regular ],5.04,30,83.201
+La Opera Cake [ 1kg ],24.19,1640,98.525
+Rainbow Cake [ 1kg ],24.19,1350,98.208
+La Opera Cake [ 500 Gm ],12.062,820,98.529
+Rainbow Cake [ 500 Gm ],12.062,0,0
+Wedges With Mint Mayo,1.994,119,98.324
+Rose & Pistacho Cake [ customized cake ],1.151,0,0
+Rainbow Cake [ customized cake ],1.151,0,0
+Hazelnut Coffee Cake [ customized cake ],1.151,0,0
+Fresh Kiwi Cake [ customized cake ],1.151,0,0
+Fresh Mango Cake [ customized cake ],1.151,0,0
+Fresh Fruit Cake [ customized cake ],1.151,0,0
+Corn Cheese Balls,23.623,159,85.143
+Almond Crunch Cake [ customized cake ],187.939,0,0
+Ferraro Rocher Cake [ customized cake ],608.667,0,0
+Coffee Cake [ customized cake ],162.356,0,0
+Butterscotch Almond Cake [ customized cake ],224.589,0,0
+Vanilla Heaven [ customized cake ],204.396,0,0
+Vanilla Heaven [ 1 Kg ],227.434,1060,78.544
+Vanilla Heaven [ 500 Gm ],118.256,530,77.687
+Oreo Cake [ customized cake ],204.509,0,0
+Kit Kat Cake [ customized cake ],289.93,0,0
+Honey Coconut Almond Cake [ customized cake ],256.738,0,0
+Double Chocolate Chocolate Cake [ customized cake ],312.406,0,0
+Chocolate Overload Cake [ customized cake ],279.062,0,0
+Chocolate Mouse Cake [ customized cake ],323.401,0,0
+Chocochip [ customized cake ],339.141,0,0
+Death By Chocolate Cake [ customized cake ],279.062,0,0
+Dutch Truffle Cake [ customized cake ],279.062,0,0
+Tripple Chocolate Indulgence Cake [ customized cake ],364.702,0,0
+Roasted Almond Cake [ customized cake ],393.753,0,0
+Crispy Potato Sticks,29.864,145,79.404
+Paneer Tikka Stuffed Garlic Bread,62.737,179,64.951
+Cm'S Special Stuffed Garlic Bread,52.78,189,72.074
+Peri Peri Wedges,39.125,139,71.853
+Potato Wedges,35.521,129,72.465
+Coke,28.751,79,63.607
+Coke (250 Ml),20.86,20,-4.302
+Biscoff Melody,121.899,229,46.769
+Cheesy Garlic Bread,40.132,159,74.76
+Garlic Bread,25.72,129,80.062
+Boost,10.561,45,76.531
+Horlicks,9.786,45,78.253
+Biscoff Cup Cake,14.692,55,73.287
+Berryblast Cup Cake [ large ],8.42,60,85.966
+Berryblast Cup Cake [ regular ],5.303,30,82.324
+Chocolate Cup Cake [ large ],9.409,60,84.318
+Chocolate Cup Cake [ regular ],5.537,30,81.545
+Tiramisu Cup Cake [ large ],12.966,60,78.391
+Tiramisu Cup Cake [ regular ],7.682,30,74.392
+Vannila Cup Cake [ large ],4.642,60,92.263
+Vannila Cup Cake [ regular ],3.521,30,88.264
+Strawberry Cup Cake [ large ],2.928,60,95.12
+Strawberry Cup Cake [ regular ],4.592,30,84.694
+Salted Caramel Cup Cake [ large ],11.133,60,81.444
+Salted Caramel Cup Cake [ regular ],5.684,30,81.052
+Hazelnut Cup Cake [ large ],6.276,60,89.54
+Hazelnut Cup Cake [ regular ],4.338,30,85.542
+Red Velvet Cup Cake [ large ],3.474,60,94.211
+Red Velvet Cup Cake [ regular ],2.822,30,90.594
+Red Velvet Chocolate Pastry,39.805,140,71.568
+Red Velvet Cream Cheese Pastry,19.777,159,87.562
+Pineapple Cup Cake [ large ],6.79,60,88.684
+Pineapple Cup Cake [ regular ],4.594,30,84.685
+Mawa Cake Slice,15.279,60,74.536
+Lotus Biscoff Cake [ customized cake ],417.191,0,0
+Lotus Biscoff Cake [ 1kg ],440.229,1600,72.486
+Lotus Biscoff Cake [ 500 Gm ],238.591,800,70.176
+Gulab Jamun Cake [ customized cake ],462.591,0,0
+Gulab Jamun Cake [ 1kg ],485.629,1420,65.801
+Gulab Jamun Cake [ 500 Gm ],219.067,710,69.146
+Milk Silk Cake [ customized cake ],127.184,0,0
+Milk Silk Cake [ 1kg ],150.222,1640,90.84
+Milk Silk Cake [ 500 Gm ],72.293,820,91.184
+Rasamalai Cake [ customized cake ],485.927,0,0
+Rasamalai Cake [ 1kg ],508.965,1440,64.655
+Rasamalai Cake [ 500 Gm ],305.241,720,57.605
+Redvelvet Chocolate Cake [ customized cake ],332.503,0,0
+Redvelvet Chocolate Cake [ 1kg ],355.541,1500,76.297
+Redvelvet Chocolate Cake [ 500 Gm ],207.428,750,72.343
+Redvelvet Cream Cheese Cake [ customized cake ],170.944,0,0
+Redvelvet Cream Cheese Cake [ 1kg ],193.983,1420,86.339
+Redvelvet Cream Cheese Cake [ 500 Gm ],95.801,710,86.507
+Cm's Special Pizza [ large ],225.278,399,43.539
+Cm's Special Pizza [ regular ],114.138,325,64.88
+Family Celebration (Large),228.372,399,42.764
+Volcano Pizza (Large),156.228,389,59.839
+Classic Italian Pizza [ large ],159.745,319,49.923
+Classic Italian Pizza [ regular ],81.372,235,65.374
+Ultimate Veg Pizza [ large ],172.858,339,49.009
+Ultimate Veg Pizza [ regular ],87.35,259,66.274
+Hot And Spicy Pizza [ large ],135.069,399,66.148
+Hot And Spicy Pizza [ regular ],69.034,319,78.359
+Spicy Veggie Pizza [ large ],102.873,310,66.815
+Spicy Veggie Pizza [ regular ],52.936,229,76.884
+Veggie Fresh [ large ],99.981,310,67.748
+Veggie Fresh [ regular ],51.49,229,77.515
+Golden Corn Pizza [ large ],108.205,299,63.811
+Golden Corn Pizza [ regular ],55.602,219,74.611
+Margarita Pizza [ large ],96.626,289,66.565
+Margarita Pizza [ regular ],49.812,210,76.28
+Paneer Tikka Pizza [ large ],152.802,335,54.387
+Paneer Tikka Pizza [ regular ],77.9,249,68.715
+Mexican Veg Pizza [ large ],118.527,329,63.974
+Mexican Veg Pizza [ regular ],72.733,245,70.313
+Makhan Wala Paneer Pizza [ large ],91.23,325,71.929
+Makhan Wala Paneer Pizza [ regular ],47.114,239,80.287
+Makhan Wala Mushroom Pizza [ large ],91.23,325,71.929
+Makhan Wala Mushroom Pizza [ regular ],47.114,239,80.287
+Jain Pizza [ large ],129.804,299,56.587
+Jain Pizza [ regular ],64.597,219,70.504
+Mushroom Tikka Pizza [ large ],148.888,335,55.556
+Mushroom Tikka Pizza [ regular ],76.12,249,69.43
+Chocolate Caramel Cake [ customized cake ],184.053,0,0
+Chocolate Caramel Cake [ 1kg ],207.091,1080,80.825
+Chocolate Caramel Cake [ 500 Gm ],100.097,540,81.464
+Chocolate Excess Cake [ customized cake ],384.181,0,0
+Chocolate Excess Cake [ 1kg ],407.219,1140,64.279
+Chocolate Excess Cake [ 500 Gm ],200.119,570,64.891
+Chocolate Crunch Cake [ customized cake ],340.144,0,0
+Chocolate Crunch Cake [ 1kg ],363.182,1160,68.691
+Chocolate Crunch Cake [ 500 Gm ],165.864,580,71.403
+Chocolate Globe Cake [ customized cake ],313.481,0,0
+Chocolate Strawberry Cake [ customized cake ],306.37,0,0
+Chocolate Strawberry Cake [ 1kg ],329.409,1040,68.326
+Chocolate Strawberry Cake [ 500 Gm ],157.244,520,69.761
+Swiss Chocolate Cake [ customized cake ],307.91,0,0
+Swiss Chocolate Cake [ 1kg ],330.948,1100,69.914
+Swiss Chocolate Cake [ 500 Gm ],148.297,550,73.037
+Chocolate Zebra Cake [ customized cake ],331.643,0,0
+Chocolate Truffle Cake [ customized cake ],344.055,0,0
+Chocolate Truffle Cake [ 1kg ],367.093,1160,68.354
+Schezwan Cheese Vada Pav,22.209,89,75.046
+Cheese Vada Pav,21.959,75,70.721
+Iced Americano,40.366,119,66.079
+Burger Bun (2pcs),7.882,24,67.157
+Pav Bun (12 Pcs),65.724,0,0
+Sandwitch Bread,31.39,0,0
+Nutella Delight,63.296,149,57.519
+Chilli Cheese Toast,43.767,129,66.072
+Cm'S Special Sandwich,72.561,169,57.065
+Veg Club Sandwich,51.178,155,66.982
+Mushroom Cheese Grilled,46.869,149,68.544
+Paneer Makhni Grilled,65.492,149,56.046
+Corn Cheese Grilled,34.752,145,76.033
+Bombay Masala Grilled,28.587,139,79.434
+Vegetable Grilled,26.014,139,81.285
+Cold Boost,68.414,149,54.084
+Mango Mojito,30.296,139,78.204
+Black Forrest Cake [ customized cake ],267.208,0,0
+Black Forrest Cake [ 1kg ],290.247,960,69.766
+Black Forrest Cake [ 500 Gm ],147.324,480,69.307
+Butterscotch Cake [ customized cake ],196.458,0,0
+Butterscotch Cake [ 1kg ],219.496,920,76.142
+Butterscotch Cake [ 500 Gm ],95.212,460,79.302
+Pineapple Cake [ customized cake ],157.282,0,0
+Pineapple Cake [ 1kg ],180.32,920,80.4
+Pineapple Cake [ 500 Gm ],86.703,460,81.151
+White Forrest Cake [ customized cake ],251.216,0,0
+White Forrest Cake [ 1kg ],274.254,1020,73.112
+White Forrest Cake [ 500 Gm ],135.545,510,73.423
+Black Current Cake [ customized cake ],140.104,0,0
+Black Current Cake [ 1kg ],163.142,980,83.353
+Black Current Cake [ 500 Gm ],75.967,490,84.496
+Blueberry Cake [ customized cake ],178.968,0,0
+Blueberry Cake [ 1kg ],202.006,1040,80.576
+Blueberry Cake [ 500 Gm ],98.817,520,80.997
+Lychee Cake [ customized cake ],156.104,0,0
+Lychee Cake [ 1kg ],179.142,1020,82.437
+Lychee Cake [ 500 Gm ],85.967,510,83.144
+Mango Cake [ customized cake ],157.326,0,0
+Mango Cake [ 1kg ],180.364,1050,82.822
+Mango Cake [ 500 Gm ],86.731,510,82.994
+Strawberry Cake [ customized cake ],157.24,0,0
+Strawberry Cake [ 1kg ],180.278,1020,82.326
+Strawberry Cake [ 500 Gm ],86.677,510,83.004
+Berry Blast Cake [ customized cake ],166.004,0,0
+Berry Blast Cake [ 1kg ],189.042,1060,82.166
+Berry Blast Cake [ 500 Gm ],91.128,530,82.806
+Rasberry & Whitechocolate Cake [ customized cake ],231.384,0,0
+Rasberry & Whitechocolate Cake [ 1kg ],254.422,1220,79.146
+Rasberry & Whitechocolate Cake [ 500 Gm ],131.607,610,78.425
+Mango White Chocolate Cake [ customized cake ],213.712,0,0
+Mango White Chocolate Cake [ 1kg ],236.75,1080,78.079
+Mango White Chocolate Cake [ 500 Gm ],120.563,540,77.674
+Chocolate Overload Cake [ 1kg ],302.1,1300,76.762
+Chocolate Overload Cake [ 500 Gm ],180.45,650,72.239
+Double Chocolate Chocolate Cake [ 1kg ],335.444,1180,71.573
+Double Chocolate Chocolate Cake [ 500 Gm ],167.689,590,71.578
+Caramel White Choco Chip Cake [ customized cake ],205.47,0,0
+Caramel White Choco Chip Cake [ 1kg ],228.509,1120,79.597
+Caramel White Choco Chip Cake [ 500 Gm ],117.62,560,78.996
+Chocochip [ 1 Kg ],362.18,1220,70.313
+Chocochip [ 500 Gm ],164.638,610,73.01
+Death By Chocolate Cake [ 1kg ],302.1,1200,74.825
+Death By Chocolate Cake [ 500 Gm ],180.45,600,69.925
+Dutch Truffle Cake [ 1kg ],302.1,1160,73.957
+Dutch Truffle Cake [ 500 Gm ],180.45,580,68.888
+White Chocolate Truffle Cake [ 1kg ],334.074,1440,76.8
+White Chocolate Truffle Cake [ 500 Gm ],185.385,720,74.252
+Tripple Chocolate Indulgence Cake [ 1kg ],387.74,1400,72.304
+Tripple Chocolate Indulgence Cake [ 500 Gm ],229.072,700,67.275
+Touch Of Gold Chocolate Cake [ 1kg ],346.439,1320,73.755
+Touch Of Gold Chocolate Cake [ 500 Gm ],175.565,660,73.399
+Milk Chocolate Fantacy Cake [ customized cake ],402.04,0,0
+Milk Chocolate Fantacy Cake [ 1kg ],425.079,1100,61.356
+Milk Chocolate Fantacy Cake [ 500 Gm ],266.703,550,51.508
+Roasted Almond Cake [ 1kg ],416.792,1340,68.896
+Roasted Almond Cake [ 500 Gm ],241.618,670,63.938
+Almond Crunch Cake [ 1kg ],210.977,1120,81.163
+Almond Crunch Cake [ 500 Gm ],107.577,560,80.79
+Ferraro Rocher Cake [ 1kg ],622.42,1660,62.505
+Ferraro Rocher Cake [ 500 Gm ],371.376,830,55.256
+Coffee Cake [ 1kg ],185.394,920,79.848
+Coffee Cake [ 500 Gm ],92.172,460,79.963
+Butterscotch Almond Cake [ 1kg ],251.223,1160,78.343
+Butterscotch Almond Cake [ 500 Gm ],130.947,580,77.423
+Paneer Popcorn,69.54,149,53.329
+Oreo Cake [ 1kg ],227.547,1100,79.314
+Oreo Cake [ 500 Gm ],130.287,550,76.312
+Kit Kat Cake [ 1kg ],312.968,1140,72.547
+Kit Kat Cake [ 500 Gm ],177.277,570,68.899
+Honey Coconut Almond Cake [ 1kg ],287.125,1200,76.073
+Honey Coconut Almond Cake [ 500 Gm ],150.357,600,74.94
+Blueberry Cheese Cake Pastry,45.109,140,67.779
+Blueberry Pastry,20.626,99,79.166
+Black Forrest Pastry,32.518,90,63.869
+Butterscotch Pastry,23.674,89,73.399
+Oreo Cheese Cake Pastry,50.551,160,68.405
+Raspberry Whitechocolate Pastry,28.04,120,76.633
+Hazelnut Almond Pastry,38.828,125,68.938
+Gulabjamun Pastry,42.437,175,75.75
+Cm'S Signature Burger,24.744,185,86.625
+Grilled Veg Burger,22.849,165,86.152
+Paneer Burger,40.733,179,77.244
+Classic Veg Burger,22.849,159,85.63
+Rose & Pistacho Cake [ 1kg ],247.68,1500,83.488
+Rose & Pistacho Cake [ 500 Gm ],123.807,750,83.492
+Fresh Kiwi Cake [ 1kg ],92.578,1280,92.767
+Fresh Kiwi Cake [ 500 Gm ],46.256,640,92.772
+Fresh Mango Cake [ 1kg ],92.578,1300,92.879
+Fresh Mango Cake [ 500 Gm ],46.256,650,92.884
+Fresh Fruit Cake [ 1kg ],92.578,1420,93.48
+Fresh Fruit Cake [ 500 Gm ],46.256,710,93.485
+Hazelnut Coffee Cake [ 1kg ],155.467,1140,86.363
+Hazelnut Coffee Cake [ 500 Gm ],83.418,570,85.365
+White Bread,18.584,45,58.703
+Watermelon Summer Splash,66.746,135,50.558
+Watermelon Lychee Cooler,60.833,139,56.235
+Vennila Latte,27.372,115,76.199
+Veg Wrap,68.684,145,52.632
+Veg Schezwan Momos [ Steamed ],51.539,95,45.748
+Veg Schezwan Momos [ Fried ],51.539,95,45.748
+Veg Momos [ Steamed ],47.545,89,46.578
+Veg Momos [ Fried ],47.545,89,46.578
+Veg Maggie,16.488,115,85.663
+Vanilla Mocha Frappe,79.472,189,57.951
+Tropical Mango Breeze,65.127,189,65.541
+Strawberry Rush,65.089,159,59.063
+Simply Oreo,81.049,189,57.117
+Schezwan Maggie,28.373,119,76.157
+Salted Fries,31.291,135,76.822
+Roasted Hazelnut Mocha,34.981,125,72.015
+Raspberry Vanilla Swirl,79.783,179,55.428
+Peri Peri Fries,39.857,149,73.25
+Penne In Pink Sauce,123.312,259,52.389
+Penne Arabiatta,52.972,249,78.726
+Penne Alfredo,121.424,259,53.118
+Peach Iced Tea,35.021,135,74.058
+Paneer Wrap,86.568,169,48.776
+Paneer Tikka Momos [ Steamed ],65.322,99,34.018
+Paneer Tikka Momos [ Fried ],65.322,99,34.018
+Paneer Momos [ Steamed ],62.541,95,34.168
+Paneer Momos [ Fried ],62.541,95,34.168
+Paneer Maggie,30.928,129,76.025
+Mushroom Momos [ Steamed ],62.89,89,29.337
+Mushroom Momos [ Fried ],62.89,89,29.337
+Mushroom Maggie,39.265,129,69.562
+Mint Mojito,54.31,135,59.771
+Mexican Veg Quesadilla,68.684,169,59.358
+Mexican Salsa Fries,36.821,159,76.842
+Mayo Fries,35.12,159,77.912
+Magic Masala Fries,36.064,139,74.055
+Lychee Lagoon,64.593,179,63.915
+Lavender Honey Iced Latte,33.692,229,85.287
+Lava Cake,16.315,80,79.606
+Iced Vanilla Chai Latte,31.616,135,76.58
+Iced Lemon Tea,39.221,135,70.947
+Iced Cappucino,32.733,199,83.551
+Hot Chocolate,17.746,125,85.803
+Hazelnut Chocolate Fusion,67.656,189,64.203
+Green Tea,5.887,75,92.15
+Fries With Trio Dip,36.705,159,76.915
+Espresso,12.148,59,79.411
+Dark Frappe,82.525,229,63.963
+Corn Momos [ Steamed ],50.073,89,43.738
+Corn Momos [ Fried ],50.073,89,43.738
+Corn Cheese Maggiee,44.114,159,72.255
+Cm'S Special Quesadilla,93.269,189,50.651
+Chocolate Zebra Cake [ 1kg ],354.681,1060,66.54
+Chocolate Zebra Cake [ 500 Gm ],159.235,530,69.956
+Chocolate Truffle Pastry,42.82,119,64.016
+Chocolate Truffle Cake [ 500 Gm ],156.767,580,72.971
+Chocolate Rose Garden Cake [ 1kg ],340.233,1240,72.562
+Chocolate Rose Garden Cake [ 500 Gm ],163.381,620,73.648
+Chocolate Mouse Cake [ 1kg ],346.439,1120,69.068
+Chocolate Mouse Cake [ 500 Gm ],153.461,560,72.596
+Chocolate Globe Cake [ 1kg ],336.519,1040,67.642
+Chocolate Globe Cake [ 500 Gm ],151.604,520,70.845
+Chocolate Brownie,16.638,89,81.306
+Chocolate Bliss,67.92,169,59.811
+Chilli Garlic Maggiee (Dry),25.963,145,82.094
+Cheesy Fries,60.376,169,64.274
+Cheese Maggie,37.61,149,74.758
+Cheese Corn Momos [ Steamed ],68.255,99,31.056
+Cheese Corn Momos [ Fried ],68.255,99,31.056
+Caramel Latte Delight,26.938,115,76.575
+Caramel Kitkat Delight,103.667,189,45.15
+Caramel Brownie,18.077,85,78.733
+Cappuchino,19.099,99,80.708
+Cafe Mocha,24.73,109,77.312
+Cafe Frappe,81.408,219,62.828
+Butterscotch Burst,65.325,159,58.915
+Chocolate Brownie With Ice Cream,36.502,150,75.665
+Brown Bread,18.584,50,62.833
+Blueberry Cheesecake Bliss,68.985,209,66.993
+Blueberry Cheese Cake [ 1kg ],288.47,1640,82.41
+Blueberry Cheese Cake [ 500 Gm ],144.235,820,82.41
+Blueberry Blast,68.985,179,61.461
+Blue Ocean Mojito,49.567,135,63.284
+Biscoff Tart,32.59,99,67.081
+Biscoff Cheese Pastry,75.916,199,61.851
+Biscoff Cheese Cake [ 1kg ],607.328,1900,68.035
+Biscoff Cheese Cake [ 500 Gm ],303.664,950,68.035
+Americano,12.148,79,84.623
+Almond Brownie,20.039,95,78.906

@@ -21,6 +21,9 @@ import os
 from google.cloud import bigquery
 from google.auth.exceptions import DefaultCredentialsError
 
+# Centralized config - NO HARDCODED PROJECT IDs
+from pillars.config_vault import get_bq_config
+
 
 class RelationshipType(str, Enum):
     SUPPLIES = "supplies"           # Supplier → Product
@@ -88,11 +91,8 @@ class GraphRAG:
     Uses BigQuery's recursive CTEs to simulate graph traversal
     without needing Neo4j or other graph databases.
     """
-    
-    PROJECT_ID = "cafe-mellow-core-2026"
-    DATASET_ID = "cafe_operations"
 
-
+    @staticmethod
     def _get_bq_client(project_id: str) -> Tuple[Optional[bigquery.Client], Optional[Exception]]:
         try:
             key_path = os.path.abspath(
@@ -109,7 +109,9 @@ class GraphRAG:
 
     def __init__(self, tenant_id: str = "default"):
         self.tenant_id = tenant_id
-        self.client, self._bq_init_error = self._get_bq_client(self.PROJECT_ID)
+        # Use centralized config
+        self.PROJECT_ID, self.DATASET_ID = get_bq_config()
+        self.client, self._bq_init_error = self._get_bq_client(self.PROJECT_ID) if self.PROJECT_ID else (None, None)
         if self.client:
             self._ensure_tables_exist()
 

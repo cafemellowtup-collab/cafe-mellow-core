@@ -3,12 +3,18 @@ Master Dashboard API Router
 Super Admin endpoints for complete tenant and system management
 """
 
+import os
 from datetime import datetime, date
 from typing import Optional, List, Dict, Any
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, HTTPException, Query, Depends, Header
 from pydantic import BaseModel, EmailStr
 
 from backend.master.tenant_registry import TenantRegistry, Tenant, TenantPlan, TenantStatus
+from backend.core.master_config import get_master_config, MasterConfig
+from backend.core.system_evolution import get_evolution, SystemEvolution
+
+# Master Key for God Mode authentication
+MASTER_KEY = os.getenv("MASTER_KEY", "titan-master-key-2026")
 from backend.master.usage_tracker import UsageTracker
 from backend.master.feature_manager import FeatureManager, FEATURE_REGISTRY
 from backend.master.health_monitor import HealthMonitor, AlertSeverity
@@ -18,6 +24,18 @@ router = APIRouter(prefix="/api/v1/master", tags=["Master Dashboard"])
 
 
 # ============ Request/Response Models ============
+
+# ============ God Mode Authentication ============
+
+def verify_master_key(x_master_key: str = Header(None, alias="X-Master-Key")):
+    """Verify the Master Key for God Mode access."""
+    if x_master_key != MASTER_KEY:
+        raise HTTPException(
+            status_code=403,
+            detail="Invalid Master Key. God Mode access denied."
+        )
+    return True
+
 
 class CreateTenantRequest(BaseModel):
     name: str
@@ -676,3 +694,214 @@ async def get_inactive_tenants(days: int = Query(default=7, le=30)):
         "count": len(inactive),
         "threshold_days": days,
     }
+
+
+# ============ GOD MODE - Master Command Center ============
+
+class GodModeFeatureRequest(BaseModel):
+    tenant_id: str
+    feature: str
+    enabled: bool
+
+
+class GodModeRuleRequest(BaseModel):
+    rule_text: str
+    priority: int = 0
+    category: str = "general"
+
+
+@router.post("/god/tenant/feature")
+async def god_mode_set_feature(
+    request: GodModeFeatureRequest,
+    _: bool = Depends(verify_master_key)
+):
+    """
+    [GOD MODE] Enable or disable a feature for a tenant.
+    
+    Requires X-Master-Key header.
+    
+    Features: simulation_mode, payroll, inventory, sales_analytics,
+              hr_module, export_excel, deep_history, ai_suggestions,
+              data_ingestion, query_engine
+    """
+    try:
+        master_config = get_master_config()
+        config = master_config.set_tenant_feature(
+            request.tenant_id,
+            request.feature,
+            request.enabled
+        )
+        
+        status = "ENABLED" if request.enabled else "DISABLED"
+        return {
+            "success": True,
+            "message": f"Feature '{request.feature}' {status} for tenant '{request.tenant_id}'",
+            "tenant_config": config
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/god/tenant/{tenant_id}/config")
+async def god_mode_get_tenant_config(
+    tenant_id: str,
+    _: bool = Depends(verify_master_key)
+):
+    """
+    [GOD MODE] Get full configuration for a tenant.
+    
+    Requires X-Master-Key header.
+    """
+    try:
+        master_config = get_master_config()
+        config = master_config.get_tenant_config(tenant_id)
+        disabled = master_config.get_disabled_features(tenant_id)
+        
+        return {
+            "tenant_id": tenant_id,
+            "config": config,
+            "disabled_features": disabled,
+            "restriction_prompt": master_config.get_feature_restrictions_prompt(tenant_id)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/god/brain/rule")
+async def god_mode_add_rule(
+    request: GodModeRuleRequest,
+    _: bool = Depends(verify_master_key)
+):
+    """
+    [GOD MODE] Inject a global rule into the AI's behavior.
+    
+    Requires X-Master-Key header.
+    
+    Examples:
+    - "Always be polite and professional"
+    - "Never reveal internal system details"
+    - "Prioritize user privacy in all responses"
+    """
+    try:
+        master_config = get_master_config()
+        rule = master_config.set_global_rule(
+            request.rule_text,
+            priority=request.priority,
+            category=request.category
+        )
+        
+        return {
+            "success": True,
+            "message": "Global rule added",
+            "rule": rule
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/god/brain/rules")
+async def god_mode_get_rules(_: bool = Depends(verify_master_key)):
+    """
+    [GOD MODE] Get all global AI rules.
+    
+    Requires X-Master-Key header.
+    """
+    try:
+        master_config = get_master_config()
+        rules = master_config.get_global_rules(active_only=False)
+        rules_text = master_config.get_rules_text()
+        
+        return {
+            "rules": rules,
+            "active_count": len([r for r in rules if r.get("active", True)]),
+            "formatted_prompt": rules_text
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/god/brain/rule/{rule_id}")
+async def god_mode_deactivate_rule(
+    rule_id: str,
+    _: bool = Depends(verify_master_key)
+):
+    """
+    [GOD MODE] Deactivate a global rule.
+    
+    Requires X-Master-Key header.
+    """
+    try:
+        master_config = get_master_config()
+        success = master_config.deactivate_rule(rule_id)
+        
+        return {
+            "success": success,
+            "message": "Rule deactivated" if success else "Rule not found"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/god/evolution/suggestions")
+async def god_mode_get_evolution_suggestions(_: bool = Depends(verify_master_key)):
+    """
+    [GOD MODE] Get AI-suggested features from friction logs.
+    
+    Requires X-Master-Key header.
+    
+    The System Evolution module tracks user friction points and
+    suggests features the Master should build.
+    """
+    try:
+        evolution = get_evolution()
+        summary = evolution.get_friction_summary()
+        suggestions = evolution.suggest_features_to_master()
+        
+        return {
+            "friction_summary": summary,
+            "feature_suggestions": suggestions,
+            "message": "Master, here are the features your users need."
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/god/evolution/friction")
+async def god_mode_get_friction_log(_: bool = Depends(verify_master_key)):
+    """
+    [GOD MODE] Get raw friction log data.
+    
+    Requires X-Master-Key header.
+    """
+    try:
+        evolution = get_evolution()
+        summary = evolution.get_friction_summary()
+        
+        return {
+            "total_friction_points": summary["total_points"],
+            "by_type": summary["by_type"],
+            "patterns": summary["patterns"],
+            "recent": summary["recent"],
+            "unresolved": summary["unresolved"]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/god/tenants")
+async def god_mode_list_configured_tenants(_: bool = Depends(verify_master_key)):
+    """
+    [GOD MODE] List all tenants with custom configurations.
+    
+    Requires X-Master-Key header.
+    """
+    try:
+        master_config = get_master_config()
+        tenants = master_config.list_all_tenants()
+        
+        return {
+            "tenants": tenants,
+            "count": len(tenants)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

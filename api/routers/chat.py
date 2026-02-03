@@ -10,7 +10,7 @@ from pydantic import BaseModel
 import json
 
 from pillars.config_vault import EffectiveSettings
-from utils.gemini_chat import get_conversation_history
+from utils.gemini_chat import stream_chat
 from utils.bq_guardrails import QueryMetaCollector
 from pillars.chat_intel import parse_time_window
 from utils.auto_task_extractor import extract_tasks_from_response, insert_tasks_to_bigquery
@@ -234,52 +234,28 @@ def chat_stream(req: ChatRequest):
     """
     cfg, client, msg = _validate_chat_request(req)
     
-    def _sse():
+    async def _sse():
         yield ": stream-open\n\n"
         
         try:
             streamed_any = False
             tw_sql, tw_label, _tw_days = parse_time_window(msg)
-            
-            # Memory optimization: Limit conversation history
-            conversation_history = get_conversation_history(client, cfg, limit=10)
-            
+
             # Accumulate full response for auto-task extraction
             full_ai_response = ""
             
             data_context = None
             data_payload: Dict[str, Any] = {"has_zero_data": False, "visual_data": None, "system_hint": None}
-            if req.enable_sql:
-                data_payload["system_hint"] = (
-                    "[SYSTEM_NOTE: Data intelligence module is disabled after cleanup; respond without SQL context.]"
-                )
             
             # Vision context if image provided
             vision_context = None
             if req.enable_vision and req.image_base64:
                 vision_context = f"[Image analysis enabled. Base64 length: {len(req.image_base64)}]"
-            
-            prompt = _build_partner_prompt(
-                user_message=msg,
-                data_summary=(data_context or "(No business data loaded.)"),
-                data_payload=data_payload,
-                conversation_history=conversation_history,
-            )
-            
-            from utils.gemini_chat import chat_with_gemini
 
             with QueryMetaCollector() as qc:
-                raw = chat_with_gemini(
-                    client,
-                    cfg,
-                    prompt,
-                    conversation_history=conversation_history,
-                    use_enhanced_prompt=True,
-                    original_user_prompt=msg,
-                    use_v3=False,
-                )
+                async for chunk in stream_chat(msg):
+                    full_ai_response += str(chunk or "")
 
-                full_ai_response = str(raw or "")
                 parsed = _extract_json_object(full_ai_response)
 
                 default_visual = _visual_widget_from_visual_data(data_payload.get("visual_data"))
@@ -405,7 +381,7 @@ def chat_non_streaming(req: ChatRequest) -> Dict[str, Any]:
                     "visual_data": None,
                 }
 
-        conversation_history = get_conversation_history(client, cfg, limit=10)
+        conversation_history = []
         prompt = _build_partner_prompt(
             user_message=msg,
             data_summary=(data_context or "(No business data loaded.)"),
@@ -413,15 +389,7 @@ def chat_non_streaming(req: ChatRequest) -> Dict[str, Any]:
             conversation_history=conversation_history,
         )
 
-        raw = chat_with_gemini(
-            client,
-            cfg,
-            prompt,
-            conversation_history=conversation_history,
-            use_enhanced_prompt=True,
-            original_user_prompt=msg,
-            use_v3=False,
-        )
+        raw = chat_with_gemini(prompt)
 
         parsed = _extract_json_object(str(raw or ""))
         default_visual = _visual_widget_from_visual_data(data_payload.get("visual_data"))

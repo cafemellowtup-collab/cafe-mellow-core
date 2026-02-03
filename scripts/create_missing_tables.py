@@ -9,14 +9,14 @@ project_root = os.path.abspath(os.path.dirname(__file__) + "/../")
 sys.path.insert(0, project_root)
 
 try:
+    from pillars.config_vault import get_bq_config
+    project_id, dataset_id = get_bq_config()
     import settings
-    project_id = settings.PROJECT_ID
-    dataset_id = settings.DATASET_ID
-    key_file = settings.KEY_FILE
+    key_file = getattr(settings, "KEY_FILE", "service-key.json")
 except:
-    # Fallback to hardcoded values if settings.py doesn't exist
-    project_id = "cafe-mellow-core-2026"
-    dataset_id = "cafe_operations"
+    # Fallback to environment variables if config not available
+    project_id = os.environ.get("PROJECT_ID", "")
+    dataset_id = os.environ.get("DATASET_ID", "cafe_operations")
     key_file = "service-key.json"
 
 key_path = key_file if os.path.isabs(key_file) else os.path.join(project_root, key_file)

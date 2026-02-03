@@ -23,15 +23,20 @@ from google.cloud import bigquery
 from google.auth.exceptions import DefaultCredentialsError
 
 try:
-    import google.generativeai as genai
+    from google import genai
+    _GENAI_AVAILABLE = True
 except ImportError:
     genai = None
+    _GENAI_AVAILABLE = False
 
 from .personality_engine import PersonalityEngine, PersonalityMode
 from .graph_rag import GraphRAG
 from .phoenix_protocols import PhoenixProtocols, HealingStatus
 from .active_senses import ActiveSenses
 from .evolution_core import EvolutionCore, LearningType
+
+# Centralized config - NO HARDCODED PROJECT IDs
+from pillars.config_vault import get_bq_config
 
 
 def _get_bq_client(project_id: str) -> Tuple[Optional[bigquery.Client], Optional[Exception]]:
@@ -59,7 +64,7 @@ class TitanResponse:
     external_context: Optional[str] = None
     learning_context: Optional[str] = None
     processing_time_ms: int = 0
-    model_used: str = "gemini-1.5-flash"
+    model_used: str = "gemini-2.0-flash"
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -82,9 +87,6 @@ class TitanV3Engine:
     The "brain" that orchestrates all AI components for optimal responses.
     """
     
-    PROJECT_ID = "cafe-mellow-core-2026"
-    DATASET_ID = "cafe_operations"
-    
     def __init__(
         self,
         tenant_id: str = "default",
@@ -94,6 +96,9 @@ class TitanV3Engine:
         self.tenant_id = tenant_id
         self.api_key = gemini_api_key or os.getenv("GEMINI_API_KEY")
         
+        # Centralized config
+        self.PROJECT_ID, self.DATASET_ID = get_bq_config()
+        
         # Initialize all v3 components
         self.personality = PersonalityEngine()
         self.graph_rag = GraphRAG(tenant_id=tenant_id)
@@ -101,14 +106,16 @@ class TitanV3Engine:
         self.senses = ActiveSenses(location=location)
         self.evolution = EvolutionCore(tenant_id=tenant_id)
         
-        # Initialize Gemini models
-        if self.api_key and genai:
-            genai.configure(api_key=self.api_key)
-            self.flash_model = genai.GenerativeModel("gemini-1.5-flash")
-            self.pro_model = genai.GenerativeModel("gemini-1.5-pro")
-        else:
-            self.flash_model = None
-            self.pro_model = None
+        # Initialize Gemini client (new google.genai API)
+        self.genai_client = None
+        self.flash_model_name = "gemini-2.0-flash"
+        self.pro_model_name = "gemini-2.5-pro"
+        
+        if self.api_key and _GENAI_AVAILABLE:
+            try:
+                self.genai_client = genai.Client(api_key=self.api_key)
+            except Exception:
+                self.genai_client = None
         
         self.bq_client, self._bq_init_error = _get_bq_client(self.PROJECT_ID)
     
@@ -206,7 +213,7 @@ class TitanV3Engine:
             external_context=external_context if external_context else None,
             learning_context=learning_context if learning_context else None,
             processing_time_ms=processing_time,
-            model_used="gemini-1.5-pro" if use_pro_model else "gemini-1.5-flash",
+            model_used="gemini-2.5-pro" if use_pro_model else "gemini-2.0-flash",
             metadata={
                 "sentiment": sentiment,
                 "query_type": query_type,
@@ -378,6 +385,67 @@ Respond according to your personality mode and the context provided. Be data-dri
             },
             "self_healing": healing_stats,
         }
+    
+    def analyze_file_structure(self, sample_rows: Dict[str, Any]) -> Optional[int]:
+        """
+        AI Judge for Structure Detective - Phase 2D
+        
+        When the Detective finds two header candidates with similar scores,
+        this method uses AI to determine which is the detailed transaction ledger.
+        
+        Args:
+            sample_rows: Dict with candidate1 and candidate2, each containing:
+                - row_idx: The row index
+                - headers: List of header values
+                
+        Returns:
+            1 if candidate1 is the transaction ledger
+            2 if candidate2 is the transaction ledger
+            None if unable to determine
+        """
+        if not self.flash_model:
+            return None
+        
+        try:
+            candidate1 = sample_rows.get("candidate1", {})
+            candidate2 = sample_rows.get("candidate2", {})
+            
+            prompt = f"""You are analyzing a spreadsheet with multiple tables.
+
+I see two potential header rows:
+
+Row {candidate1.get('row_idx', '?')}: {candidate1.get('headers', [])}
+Row {candidate2.get('row_idx', '?')}: {candidate2.get('headers', [])}
+
+Which one is the DETAILED TRANSACTION LEDGER (the one with individual transactions,
+not a summary table)?
+
+Rules:
+- Transaction ledgers have columns like: Date, Item, Qty, Amount, Invoice, Order
+- Summary tables have columns like: Category, Total, Count, Average
+- Prefer the table with MORE columns (more detailed)
+- Prefer the table that appears LATER in the file (summaries often come first)
+
+Respond with ONLY the number 1 or 2 (nothing else):
+- 1 = Row {candidate1.get('row_idx', '?')} is the transaction ledger
+- 2 = Row {candidate2.get('row_idx', '?')} is the transaction ledger"""
+            
+            response = self.genai_client.models.generate_content(
+                model=self.flash_model_name,
+                contents=prompt
+            )
+            result = response.text.strip()
+            
+            if result == "1":
+                return 1
+            elif result == "2":
+                return 2
+            else:
+                return None
+                
+        except Exception as e:
+            print(f"[TITAN] AI Judge error: {e}")
+            return None
 
 
 # Singleton instance for easy access
@@ -390,8 +458,15 @@ def get_titan_engine(
 ) -> TitanV3Engine:
     """Get or create TITAN v3 engine instance"""
     global _engine_instance
+
+    if gemini_api_key is None:
+        gemini_api_key = os.getenv("GEMINI_API_KEY")
     
-    if _engine_instance is None or _engine_instance.tenant_id != tenant_id:
+    if (
+        _engine_instance is None
+        or _engine_instance.tenant_id != tenant_id
+        or (gemini_api_key and _engine_instance.api_key != gemini_api_key)
+    ):
         _engine_instance = TitanV3Engine(
             tenant_id=tenant_id,
             gemini_api_key=gemini_api_key

@@ -200,6 +200,22 @@ python backend/universal_adapter/init_tables.py
 
 ---
 
+## 🏰 Phase 8 - Fortress Upgrade
+
+1. **The Bouncer (Schema Validation)**
+   - Rejects junk/unknown files before processing.
+   - Requires critical columns: Date+Amount (STREAM) or Item+Price (STATE).
+2. **The Sherlock (Strict Classification)**
+   - Deterministic STREAM vs STATE classification using filename + column hints.
+   - Falls back to column signals when filename hints are weak.
+3. **Turbo Engine (Async Batches)**
+   - Classifies large uploads in async chunks of 50 to avoid timeouts.
+4. **Ghost Logic (Resilience)**
+   - STREAM: auto-creates provisional menu items for unknown sales entities.
+   - STATE: upserts items and converts provisional → official.
+
+---
+
 ## Production URLs
 
 - **Backend**: https://cafe-mellow-backend-564285438043.asia-south1.run.app

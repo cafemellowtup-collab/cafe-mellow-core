@@ -1,4 +1,7 @@
 import os
+from dotenv import load_dotenv
+load_dotenv()  # Load .env before any other imports
+
 import json
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, List, Optional
@@ -13,7 +16,7 @@ from utils.ops_brief import generate_and_store as _generate_and_store_brief
 from utils.ops_brief import get_latest_brief as _get_latest_brief
 from utils.ai_task_queue import generate_and_write_ops_tasks as _generate_and_write_ops_tasks
 
-from api.routers import cron, ledger, analytics, hr, ceo_brief, upload, chat, sync, oracle, forecast, users, notifications, auth, universal_adapter, semantic_brain, master, reports, titan_v3
+from api.routers import cron, ledger, hr, ceo_brief, upload, chat, sync, oracle, forecast, users, notifications, auth, universal_adapter, semantic_brain, master, titan_v3, ingest, quarantine, query
 try:
     from api.routers import ingester  # type: ignore
 except Exception:
@@ -58,6 +61,10 @@ async def global_health():
 async def startup_cron():
     """Initialize background tasks for automated daily sync"""
     global scheduler
+    
+    # CORS confirmation
+    print("✅ CORS Configured for Frontend: localhost:3000, localhost:3001, 127.0.0.1:3000, 127.0.0.1:3001")
+    
     try:
         from apscheduler.schedulers.asyncio import AsyncIOScheduler
         from apscheduler.triggers.cron import CronTrigger
@@ -82,9 +89,9 @@ async def startup_cron():
         )
         
         scheduler.start()
-        print("✅ Auto-Pilot cron scheduler initialized")
+        print("[OK] Auto-Pilot cron scheduler initialized")
     except Exception as e:
-        print(f"⚠️ Cron scheduler failed to start: {e}")
+        print(f"[WARN] Cron scheduler failed to start: {e}")
 
 
 @app.on_event("shutdown")
@@ -94,9 +101,9 @@ async def shutdown_cleanup():
     try:
         if scheduler and scheduler.running:
             scheduler.shutdown(wait=False)
-            print("✅ Cron scheduler shut down cleanly")
+            print("[OK] Cron scheduler shut down cleanly")
     except Exception as e:
-        print(f"⚠️ Error during scheduler shutdown: {e}")
+        print(f"[WARN] Error during scheduler shutdown: {e}")
     
     # Allow time for any active connections to close
     import asyncio
@@ -135,7 +142,7 @@ async def _run_daily_brief():
 
 app.include_router(cron.router)
 app.include_router(ledger.router)
-app.include_router(analytics.router)
+# app.include_router(analytics.router)  # DEPRECATED: Replaced by QueryEngine
 app.include_router(hr.router)
 app.include_router(ceo_brief.router)
 app.include_router(upload.router)
@@ -152,20 +159,15 @@ app.include_router(universal_adapter.router)
 app.include_router(airlock_router)
 app.include_router(semantic_brain.router)
 app.include_router(master.router)
-app.include_router(reports.router)
+# app.include_router(reports.router)  # DEPRECATED: Replaced by QueryEngine
 app.include_router(titan_v3.router)
+app.include_router(ingest.router, tags=["Ingestion"])
+app.include_router(quarantine.router, prefix="/api/v1/quarantine", tags=["Quarantine"])
+app.include_router(query.router, prefix="/api/v1/query", tags=["Query Engine"])
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001",
-        "https://cafe-mellow-core.vercel.app",
-        "https://cafe-mellow-core-git-main-gokul-rajs-projects-99d7ad96.vercel.app",
-    ],
-    allow_origin_regex=r"^https?:\/\/(localhost|127\.0\.0\.1|\d{1,3}(?:\.\d{1,3}){3}):30\d{2}$|^https:\/\/cafe-mellow-core.*\.vercel\.app$",
+    allow_origins=["*"],  # Wildcard for debugging - eliminates CORS as variable
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

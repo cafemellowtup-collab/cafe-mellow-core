@@ -14,10 +14,17 @@ TITAN is an **AI-powered Business Intelligence Platform** with a revolutionary *
 - **Immutable Event Ledger** for complete audit trails
 - **AI CFO Chat** that speaks in numbers and action items
 - **360° Cross-Category Analysis** for executive insights
+- **Phase 8 Fortress** ingestion hardening: Bouncer, Sherlock, Turbo, Ghost Logic
 
 ---
 
-## 🚀 Quick Start (5 Minutes)
+## Status
+
+**Migration:** The project is **~70% complete** and currently **paused for Google Project IDX migration**.
+
+---
+
+## Quick Start (5 Minutes)
 
 ### Prerequisites
 - Python 3.x installed
@@ -36,7 +43,7 @@ cp .env.example .env  # Edit with your credentials
 uvicorn api.main:app --port 8000
 
 # 4. Start web interface (new terminal)
-cd web
+cd frontend
 npm install
 npm run dev
 
@@ -49,6 +56,8 @@ npm run dev
 ---
 
 ## 🏗️ Tech Stack
+
+**Primary Stack (Current):** Next.js (App Router), BigQuery, Vercel, Gemini API.
 
 ### Backend
 - **Framework:** FastAPI (REST API) + Streamlit (Admin Dashboard)
@@ -66,6 +75,7 @@ npm run dev
 - Google Drive API (document storage)
 - Google Cloud BigQuery (analytics)
 - Gemini AI (intelligence layer)
+- Vercel (frontend deployment)
 
 ---
 
@@ -107,12 +117,12 @@ Cafe_AI/
 │       ├── p2_inventory_gap.py
 │       └── p3_expense_purity.py
 │
-├── web/                      # Next.js frontend
-│   └── src/
-│       ├── app/dashboard/    # Metrics dashboard
-│       ├── app/chat/         # AI chat interface
-│       ├── app/operations/   # Operations view
-│       └── app/settings/     # Configuration UI
+├── frontend/                 # Next.js frontend
+│   └── app/
+│       ├── dashboard/        # Metrics dashboard
+│       ├── chat/             # AI chat interface
+│       ├── operations/       # Operations view
+│       └── settings/         # Configuration UI
 │
 ├── scheduler/                # Automation
 │   └── daily_automation.py
@@ -203,7 +213,7 @@ streamlit run titan_app.py
 # → http://localhost:8501
 
 # Modern Web Interface (Next.js)
-cd web && npm run dev
+cd frontend && npm run dev
 # → http://localhost:3000
 ```
 
@@ -378,6 +388,8 @@ Full API documentation: http://localhost:8000/docs (when server is running)
 - Cost-aware BigQuery query execution
 - Streaming chat responses (SSE)
 - Multi-tenant ready architecture
+- **Universal Ingestion API:** Accepts Excel/CSV files from any source (PetPooja, Tally, etc.) via `/api/v1/ingest/file`
+- **SaaS-Ready Architecture:** Multi-tenant configuration with isolated data streams, centralized config via `get_bq_config()`
 
 ### ⏳ Roadmap
 - Multi-tenant isolation (row-level security)
@@ -435,12 +447,10 @@ cat logs/titan_system_log.txt
 
 ## 📚 Additional Documentation
 
-- **BLUEPRINT.md** - Auto-generated system architecture map
-- **PROJECT_FLOW_EXPLANATION.md** - Deep technical flow details
-- **COMPLETE_IMPLEMENTATION_SUMMARY.md** - Implementation status
-- **TITAN_VISION_ROADMAP.md** - Product roadmap
-- **DEPLOY.md** - Deployment guide
-- **EXPENSES_MODULE_SPEC.md** - Expense tracking specifications
+- **docs/UNIVERSAL_ADAPTER.md** - Universal adapter architecture and pipeline notes
+- **docs/PHASE_8_FORTRESS.md** - Ingestion hardening and failure containment
+- **docs/LEGACY_DOCS.md** - Index of historical references
+- **_legacy_context/** - Archived strategic context (ARCHITECTURE, PROJECT_ROADMAP, QUICKSTART, VISION)
 
 ---
 

@@ -32,9 +32,14 @@ except ImportError:
     storage = None
 
 try:
-    import google.generativeai as genai
+    from google import genai
+    _GENAI_AVAILABLE = True
 except ImportError:
     genai = None
+    _GENAI_AVAILABLE = False
+
+# Centralized config - NO HARDCODED PROJECT IDs
+from pillars.config_vault import get_bq_config
 
 
 class HealingStatus(str, Enum):
@@ -85,19 +90,22 @@ class PhoenixProtocols:
     4. Hot-loading fixed code
     """
     
-    PROJECT_ID = "cafe-mellow-core-2026"
-    DATASET_ID = "cafe_operations"
     GCS_BUCKET = "titan-dynamic-code"
     
     def __init__(self, gemini_api_key: Optional[str] = None):
         self.api_key = gemini_api_key or os.getenv("GEMINI_API_KEY")
-        if self.api_key and genai:
-            genai.configure(api_key=self.api_key)
-            self.doctor_model = genai.GenerativeModel("gemini-1.5-pro")
-        else:
-            self.doctor_model = None
+        self.genai_client = None
+        self.model_name = "gemini-2.5-pro"
         
-        self.bq_client = bigquery.Client(project=self.PROJECT_ID)
+        if self.api_key and _GENAI_AVAILABLE:
+            try:
+                self.genai_client = genai.Client(api_key=self.api_key)
+            except Exception:
+                self.genai_client = None
+        
+        # Use centralized config
+        self.PROJECT_ID, self.DATASET_ID = get_bq_config()
+        self.bq_client = bigquery.Client(project=self.PROJECT_ID) if self.PROJECT_ID else None
         self.healing_history: List[HealingResult] = []
         self.dynamic_functions: Dict[str, Callable] = {}
         self._ensure_tables_exist()
@@ -191,7 +199,7 @@ class PhoenixProtocols:
             original_code=context.function_code,
         )
         
-        if not self.doctor_model:
+        if not self.genai_client:
             result.status = HealingStatus.ESCALATED
             result.fix_description = "No AI model available for healing"
             return result
@@ -279,7 +287,10 @@ DESCRIPTION: [One line describing what you fixed]
 CONFIDENCE: [0.0 to 1.0 how confident you are this fix is correct]
 """
         
-        response = self.doctor_model.generate_content(prompt)
+        response = self.genai_client.models.generate_content(
+            model=self.model_name,
+            contents=prompt
+        )
         response_text = response.text
         
         # Parse the response

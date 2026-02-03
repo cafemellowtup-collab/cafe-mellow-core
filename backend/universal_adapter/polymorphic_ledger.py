@@ -122,35 +122,35 @@ def init_universal_ledger():
     table_id = f"{client.project}.{dataset}.universal_ledger"
     
     schema = [
-        {"name": "event_id", "type": "STRING", "mode": "REQUIRED"},
-        {"name": "tenant_id", "type": "STRING", "mode": "REQUIRED"},
-        {"name": "timestamp", "type": "TIMESTAMP", "mode": "REQUIRED"},
-        {"name": "source_system", "type": "STRING", "mode": "REQUIRED"},
-        
+        {"name": "event_id", "field_type": "STRING", "mode": "REQUIRED"},
+        {"name": "tenant_id", "field_type": "STRING", "mode": "REQUIRED"},
+        {"name": "timestamp", "field_type": "TIMESTAMP", "mode": "REQUIRED"},
+        {"name": "source_system", "field_type": "STRING", "mode": "REQUIRED"},
+
         # AI Classification
-        {"name": "category", "type": "STRING", "mode": "REQUIRED"},
-        {"name": "sub_category", "type": "STRING", "mode": "NULLABLE"},
-        {"name": "confidence_score", "type": "FLOAT", "mode": "REQUIRED"},
-        {"name": "ai_reasoning", "type": "STRING", "mode": "NULLABLE"},
-        
+        {"name": "category", "field_type": "STRING", "mode": "REQUIRED"},
+        {"name": "sub_category", "field_type": "STRING", "mode": "NULLABLE"},
+        {"name": "confidence_score", "field_type": "FLOAT", "mode": "REQUIRED"},
+        {"name": "ai_reasoning", "field_type": "STRING", "mode": "NULLABLE"},
+
         # Standardized Fields
-        {"name": "amount", "type": "FLOAT", "mode": "NULLABLE"},
-        {"name": "entity_name", "type": "STRING", "mode": "NULLABLE"},
-        {"name": "reference_id", "type": "STRING", "mode": "NULLABLE"},
-        
+        {"name": "amount", "field_type": "FLOAT", "mode": "NULLABLE"},
+        {"name": "entity_name", "field_type": "STRING", "mode": "NULLABLE"},
+        {"name": "reference_id", "field_type": "STRING", "mode": "NULLABLE"},
+
         # Rich Data
-        {"name": "rich_data", "type": "STRING", "mode": "REQUIRED"},  # JSON
-        {"name": "schema_fingerprint", "type": "STRING", "mode": "NULLABLE"},
-        
+        {"name": "rich_data", "field_type": "STRING", "mode": "REQUIRED"},  # JSON
+        {"name": "schema_fingerprint", "field_type": "STRING", "mode": "NULLABLE"},
+
         # Verification
-        {"name": "verified", "type": "BOOLEAN", "mode": "REQUIRED"},
-        {"name": "verified_by", "type": "STRING", "mode": "NULLABLE"},
-        {"name": "verified_at", "type": "TIMESTAMP", "mode": "NULLABLE"},
-        {"name": "original_category", "type": "STRING", "mode": "NULLABLE"},
-        
+        {"name": "verified", "field_type": "BOOLEAN", "mode": "REQUIRED"},
+        {"name": "verified_by", "field_type": "STRING", "mode": "NULLABLE"},
+        {"name": "verified_at", "field_type": "TIMESTAMP", "mode": "NULLABLE"},
+        {"name": "original_category", "field_type": "STRING", "mode": "NULLABLE"},
+
         # Metadata
-        {"name": "created_at", "type": "TIMESTAMP", "mode": "REQUIRED"},
-        {"name": "raw_log_id", "type": "STRING", "mode": "NULLABLE"},
+        {"name": "created_at", "field_type": "TIMESTAMP", "mode": "REQUIRED"},
+        {"name": "raw_log_id", "field_type": "STRING", "mode": "NULLABLE"},
     ]
     
     try:
@@ -170,10 +170,10 @@ def init_universal_ledger():
         table.clustering_fields = ["tenant_id", "category", "sub_category"]
         
         table = client.create_table(table, exists_ok=True)
-        print(f"✅ Universal Ledger initialized: {table_id}")
+        print(f"[OK] Universal Ledger initialized: {table_id}")
         return True
     except Exception as e:
-        print(f"❌ Failed to init universal ledger: {e}")
+        print(f"[WARN] Failed to init universal ledger: {e}")
         return False
 
 
@@ -190,17 +190,17 @@ def init_category_registry():
     table_id = f"{client.project}.{dataset}.category_registry"
     
     schema = [
-        {"name": "category_id", "type": "STRING", "mode": "REQUIRED"},
-        {"name": "tenant_id", "type": "STRING", "mode": "REQUIRED"},
-        {"name": "category_name", "type": "STRING", "mode": "REQUIRED"},
-        {"name": "parent_category", "type": "STRING", "mode": "NULLABLE"},
-        {"name": "description", "type": "STRING", "mode": "NULLABLE"},
-        {"name": "is_system", "type": "BOOLEAN", "mode": "REQUIRED"},  # Built-in vs AI-generated
-        {"name": "is_active", "type": "BOOLEAN", "mode": "REQUIRED"},
-        {"name": "sample_schema", "type": "STRING", "mode": "NULLABLE"},  # JSON schema
-        {"name": "event_count", "type": "INTEGER", "mode": "NULLABLE"},
-        {"name": "created_at", "type": "TIMESTAMP", "mode": "REQUIRED"},
-        {"name": "created_by", "type": "STRING", "mode": "NULLABLE"},
+        {"name": "category_id", "field_type": "STRING", "mode": "REQUIRED"},
+        {"name": "tenant_id", "field_type": "STRING", "mode": "REQUIRED"},
+        {"name": "category_name", "field_type": "STRING", "mode": "REQUIRED"},
+        {"name": "parent_category", "field_type": "STRING", "mode": "NULLABLE"},
+        {"name": "description", "field_type": "STRING", "mode": "NULLABLE"},
+        {"name": "is_system", "field_type": "BOOLEAN", "mode": "REQUIRED"},  # Built-in vs AI-generated
+        {"name": "is_active", "field_type": "BOOLEAN", "mode": "REQUIRED"},
+        {"name": "sample_schema", "field_type": "STRING", "mode": "NULLABLE"},  # JSON schema
+        {"name": "event_count", "field_type": "INTEGER", "mode": "NULLABLE"},
+        {"name": "created_at", "field_type": "TIMESTAMP", "mode": "REQUIRED"},
+        {"name": "created_by", "field_type": "STRING", "mode": "NULLABLE"},
     ]
     
     try:
@@ -211,10 +211,10 @@ def init_category_registry():
         ])
         
         table = client.create_table(table, exists_ok=True)
-        print(f"✅ Category Registry initialized: {table_id}")
+        print(f"[OK] Category Registry initialized: {table_id}")
         return True
     except Exception as e:
-        print(f"❌ Failed to init category registry: {e}")
+        print(f"[WARN] Failed to init category registry: {e}")
         return False
 
 
@@ -231,18 +231,18 @@ def init_schema_patterns():
     table_id = f"{client.project}.{dataset}.schema_patterns"
     
     schema = [
-        {"name": "pattern_id", "type": "STRING", "mode": "REQUIRED"},
-        {"name": "fingerprint", "type": "STRING", "mode": "REQUIRED"},
-        {"name": "tenant_id", "type": "STRING", "mode": "NULLABLE"},  # NULL = global pattern
-        {"name": "source_system", "type": "STRING", "mode": "NULLABLE"},
-        {"name": "category", "type": "STRING", "mode": "REQUIRED"},
-        {"name": "sub_category", "type": "STRING", "mode": "NULLABLE"},
-        {"name": "confidence_score", "type": "FLOAT", "mode": "REQUIRED"},
-        {"name": "field_mapping", "type": "STRING", "mode": "NULLABLE"},  # JSON
-        {"name": "sample_data", "type": "STRING", "mode": "NULLABLE"},  # JSON
-        {"name": "hit_count", "type": "INTEGER", "mode": "REQUIRED"},
-        {"name": "last_used", "type": "TIMESTAMP", "mode": "REQUIRED"},
-        {"name": "created_at", "type": "TIMESTAMP", "mode": "REQUIRED"},
+        {"name": "pattern_id", "field_type": "STRING", "mode": "REQUIRED"},
+        {"name": "fingerprint", "field_type": "STRING", "mode": "REQUIRED"},
+        {"name": "tenant_id", "field_type": "STRING", "mode": "NULLABLE"},  # NULL = global pattern
+        {"name": "source_system", "field_type": "STRING", "mode": "NULLABLE"},
+        {"name": "category", "field_type": "STRING", "mode": "REQUIRED"},
+        {"name": "sub_category", "field_type": "STRING", "mode": "NULLABLE"},
+        {"name": "confidence_score", "field_type": "FLOAT", "mode": "REQUIRED"},
+        {"name": "field_mapping", "field_type": "STRING", "mode": "NULLABLE"},  # JSON
+        {"name": "sample_data", "field_type": "STRING", "mode": "NULLABLE"},  # JSON
+        {"name": "hit_count", "field_type": "INTEGER", "mode": "REQUIRED"},
+        {"name": "last_used", "field_type": "TIMESTAMP", "mode": "REQUIRED"},
+        {"name": "created_at", "field_type": "TIMESTAMP", "mode": "REQUIRED"},
     ]
     
     try:
@@ -253,10 +253,10 @@ def init_schema_patterns():
         ])
         
         table = client.create_table(table, exists_ok=True)
-        print(f"✅ Schema Patterns initialized: {table_id}")
+        print(f"[OK] Schema Patterns initialized: {table_id}")
         return True
     except Exception as e:
-        print(f"❌ Failed to init schema patterns: {e}")
+        print(f"[WARN] Failed to init schema patterns: {e}")
         return False
 
 
@@ -384,11 +384,11 @@ def store_universal_event(
         )
         
         client.query(sql, job_config=job_config).result()
-        print(f"✅ Stored universal event: {event_id} [{event.category}/{event.sub_category}]")
+        print(f"[OK] Stored universal event: {event_id} [{event.category}/{event.sub_category}]")
         return event_id
         
     except Exception as e:
-        print(f"❌ Failed to store event: {e}")
+        print(f"[WARN] Failed to store event: {e}")
         return None
 
 

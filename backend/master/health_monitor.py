@@ -11,11 +11,13 @@ from enum import Enum
 from google.cloud import bigquery
 from google.auth.exceptions import DefaultCredentialsError
 
-PROJECT_ID = "cafe-mellow-core-2026"
-DATASET_ID = "cafe_operations"
+# Centralized config - NO HARDCODED PROJECT IDs
+from pillars.config_vault import get_bq_config
+
+PROJECT_ID, DATASET_ID = get_bq_config()
 _bq_init_error: Optional[Exception] = None
 try:
-    bq = bigquery.Client(project=PROJECT_ID)
+    bq = bigquery.Client(project=PROJECT_ID) if PROJECT_ID else None
 except DefaultCredentialsError as e:
     bq = None
     _bq_init_error = e

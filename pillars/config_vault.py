@@ -78,3 +78,42 @@ class EffectiveSettings:
 
     def all_overridable(self):
         return {k: getattr(self, k) for k in OVERRIDABLE_KEYS}
+
+
+# =============================================================================
+# Centralized BigQuery Configuration (SaaS Multi-Tenant Ready)
+# =============================================================================
+
+from typing import Tuple
+
+def get_bq_config() -> Tuple[str, str]:
+    """
+    Get BigQuery PROJECT_ID and DATASET_ID from centralized config.
+    
+    Priority:
+    1. config_override.json (UI-editable)
+    2. settings.py (defaults)
+    3. Environment variables (fallback)
+    
+    Returns:
+        Tuple[str, str]: (PROJECT_ID, DATASET_ID)
+    
+    Usage:
+        from pillars.config_vault import get_bq_config
+        PROJECT_ID, DATASET_ID = get_bq_config()
+    """
+    cfg = EffectiveSettings()
+    
+    # Get PROJECT_ID with fallback chain
+    project_id = getattr(cfg, "PROJECT_ID", None)
+    if not project_id:
+        project_id = os.getenv("PROJECT_ID", "")
+    
+    # Get DATASET_ID with fallback chain
+    dataset_id = getattr(cfg, "DATASET_ID", None)
+    if not dataset_id:
+        dataset_id = getattr(cfg, "BQ_DATASET", None)
+    if not dataset_id:
+        dataset_id = os.getenv("BQ_DATASET", os.getenv("DATASET_ID", "cafe_operations"))
+    
+    return project_id, dataset_id

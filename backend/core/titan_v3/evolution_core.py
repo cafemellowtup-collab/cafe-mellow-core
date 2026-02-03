@@ -22,9 +22,14 @@ from google.auth.exceptions import DefaultCredentialsError
 from google.cloud import bigquery
 
 try:
-    import google.generativeai as genai
+    from google import genai
+    _GENAI_AVAILABLE = True
 except ImportError:
     genai = None
+    _GENAI_AVAILABLE = False
+
+# Centralized config - NO HARDCODED PROJECT IDs
+from pillars.config_vault import get_bq_config
 
 
 def _get_bq_client(project_id: str) -> Tuple[Optional[bigquery.Client], Optional[Exception]]:
@@ -92,19 +97,21 @@ class EvolutionCore:
     strategy optimization based on interactions and feedback.
     """
     
-    PROJECT_ID = "cafe-mellow-core-2026"
-    DATASET_ID = "cafe_operations"
-    
     def __init__(self, tenant_id: str = "default"):
         self.tenant_id = tenant_id
-        self.bq_client, self._bq_init_error = _get_bq_client(self.PROJECT_ID)
+        # Use centralized config
+        self.PROJECT_ID, self.DATASET_ID = get_bq_config()
+        self.bq_client, self._bq_init_error = _get_bq_client(self.PROJECT_ID) if self.PROJECT_ID else (None, None)
         
         api_key = os.getenv("GEMINI_API_KEY")
-        if api_key and genai:
-            genai.configure(api_key=api_key)
-            self.model = genai.GenerativeModel("gemini-1.5-flash")
-        else:
-            self.model = None
+        self.genai_client = None
+        self.model_name = "gemini-2.0-flash"
+        
+        if api_key and _GENAI_AVAILABLE:
+            try:
+                self.genai_client = genai.Client(api_key=api_key)
+            except Exception:
+                self.genai_client = None
         
         if self.bq_client:
             self._ensure_tables_exist()
@@ -247,7 +254,7 @@ class EvolutionCore:
         interaction_id: str
     ):
         """Extract learning from successful interaction"""
-        if not self.model:
+        if not self.genai_client:
             return
         
         # Use AI to extract the winning strategy
@@ -269,7 +276,10 @@ Format as JSON:
 """
         
         try:
-            result = self.model.generate_content(prompt)
+            result = self.genai_client.models.generate_content(
+                model=self.model_name,
+                contents=prompt
+            )
             response_text = result.text
             
             # Parse JSON from response
@@ -299,7 +309,7 @@ Format as JSON:
         interaction_id: str
     ):
         """Learn from failed interaction"""
-        if not self.model:
+        if not self.genai_client:
             return
         
         prompt = f"""Analyze this failed AI interaction and identify what went wrong.
@@ -320,7 +330,10 @@ Format as JSON:
 """
         
         try:
-            result = self.model.generate_content(prompt)
+            result = self.genai_client.models.generate_content(
+                model=self.model_name,
+                contents=prompt
+            )
             response_text = result.text
             
             if "{" in response_text:
@@ -561,7 +574,7 @@ Format as JSON:
     
     def synthesize_insights(self) -> List[Dict[str, Any]]:
         """Synthesize learnings into actionable business insights"""
-        if not self.model:
+        if not self.genai_client:
             return []
         
         # Get recent high-confidence learnings
@@ -593,7 +606,10 @@ Format as JSON array:
 """
         
         try:
-            result = self.model.generate_content(prompt)
+            result = self.genai_client.models.generate_content(
+                model=self.model_name,
+                contents=prompt
+            )
             response_text = result.text
             
             if "[" in response_text:

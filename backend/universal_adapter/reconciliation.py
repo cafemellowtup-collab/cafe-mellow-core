@@ -27,8 +27,10 @@ from .event_ledger import (
     process_incoming_data, ensure_event_log_table
 )
 
-PROJECT_ID = "cafe-mellow-core-2026"
-DATASET_ID = "cafe_operations"
+# Centralized config - NO HARDCODED PROJECT IDs
+from pillars.config_vault import get_bq_config
+
+PROJECT_ID, DATASET_ID = get_bq_config()
 
 
 class GapType(str, Enum):

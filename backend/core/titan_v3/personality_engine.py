@@ -97,6 +97,30 @@ class PersonalityEngine:
         self.sentiment_history: List[SentimentLevel] = []
         self.mode_history: List[PersonalityMode] = []
         self.user_preferences: Dict[str, Any] = {}
+
+    def detect_sentiment(self, message: str) -> SentimentLevel:
+        sentiment, _ = self._detect_sentiment(message)
+        return sentiment
+
+    def classify_query_type(self, message: str) -> QueryType:
+        return self._detect_query_type(message)
+
+    def select_mode(
+        self,
+        sentiment: SentimentLevel,
+        query_type: QueryType,
+        business_context: Optional[Dict] = None,
+    ) -> PersonalityMode:
+        is_crisis = self._check_crisis_context(business_context)
+        mode, _ = self._select_mode(sentiment, query_type, is_crisis)
+        return mode
+
+    def get_tone_instructions(
+        self,
+        mode: PersonalityMode,
+        sentiment: Optional[SentimentLevel] = None,
+    ) -> str:
+        return self._generate_tone_instructions(mode, sentiment or SentimentLevel.NEUTRAL)
         
     def analyze_message(self, message: str, business_context: Optional[Dict] = None) -> PersonalityContext:
         """

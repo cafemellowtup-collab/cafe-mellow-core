@@ -16,14 +16,16 @@ from datetime import datetime
 
 import settings
 
+# Centralized config - NO HARDCODED PROJECT IDs
+from pillars.config_vault import get_bq_config
+
 if sys.platform == 'win32':
     sys.stdout.reconfigure(encoding='utf-8')
 
 _ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 KEY_FILE = getattr(settings, "KEY_FILE", "service-key.json")
 KEY_PATH = KEY_FILE if os.path.isabs(KEY_FILE) else os.path.join(_ROOT, KEY_FILE)
-PROJECT_ID = getattr(settings, "PROJECT_ID", "cafe-mellow-core-2026")
-DATASET_ID = getattr(settings, "DATASET_ID", "cafe_operations")
+PROJECT_ID, DATASET_ID = get_bq_config()
 TABLE_ID = getattr(settings, "TABLE_CASH", "cash_flow_master")
 DRIVE_FOLDER_ID = getattr(settings, "FOLDER_ID_CASH_OPS", "1WsoWDQtkyBcmchEkJ2CgETb64JUvvroS")
 

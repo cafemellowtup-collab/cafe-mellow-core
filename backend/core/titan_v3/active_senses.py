@@ -25,6 +25,9 @@ import hashlib
 from google.cloud import bigquery
 from google.auth.exceptions import DefaultCredentialsError
 
+# Centralized config - NO HARDCODED PROJECT IDs
+from pillars.config_vault import get_bq_config
+
 
 def _get_bq_client(project_id: str) -> Tuple[Optional[bigquery.Client], Optional[Exception]]:
     try:
@@ -120,15 +123,14 @@ class ActiveSenses:
     Integrates real-time external data to enhance AI decisions.
     """
     
-    PROJECT_ID = "cafe-mellow-core-2026"
-    DATASET_ID = "cafe_operations"
-    
     # Cache for readings
     _cache: Dict[str, SenseReading] = {}
     
     def __init__(self, location: str = "Bangalore, India"):
         self.location = location
-        self.bq_client, self._bq_init_error = _get_bq_client(self.PROJECT_ID)
+        # Use centralized config
+        self.PROJECT_ID, self.DATASET_ID = get_bq_config()
+        self.bq_client, self._bq_init_error = _get_bq_client(self.PROJECT_ID) if self.PROJECT_ID else (None, None)
         if self.bq_client:
             self._ensure_tables_exist()
     
